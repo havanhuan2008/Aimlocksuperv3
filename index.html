@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AIMLOCK SUPER V3</title>
+    <title>AIMLOCK SUPER V3 — VIP PRO</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- ══ FIREBASE SDK ══ -->
@@ -82,6 +82,32 @@
             90%  { opacity:0.2; }
             100% { transform:translateY(-20vh) rotate(360deg); opacity:0; }
         }
+
+        /* ══ RIPPLE ══ */
+        .ripple-overlay {
+            position:fixed; inset:0; z-index:99980; pointer-events:none;
+            background:radial-gradient(circle at 50% 50%, rgba(37,99,235,0.12) 0%, transparent 70%);
+            opacity:0; transition:opacity 0.25s;
+        }
+        .ripple-overlay.show { opacity:1; }
+
+        /* ══ TOAST ══ */
+        .toast-wrap {
+            position:fixed; top:16px; left:50%; transform:translateX(-50%);
+            z-index:99999; display:flex; flex-direction:column; gap:8px;
+            pointer-events:none; max-width:340px; width:calc(100% - 32px);
+        }
+        .toast {
+            background:rgba(15,23,42,0.95); border:1px solid rgba(96,165,250,0.22);
+            color:#e2e8f0; padding:11px 18px; border-radius:14px;
+            font-size:13px; font-weight:600; font-family:'Nunito',sans-serif;
+            backdrop-filter:blur(16px);
+            display:flex; align-items:center; gap:10px;
+            animation:toastIn 0.35s cubic-bezier(0.19,1,0.22,1), toastOut 0.3s ease-in 2.9s forwards;
+            box-shadow:0 8px 30px rgba(0,0,0,0.4);
+        }
+        @keyframes toastIn  { from{ transform:translateY(-20px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+        @keyframes toastOut { from{ opacity:1; } to{ transform:translateY(-16px); opacity:0; } }
 
         /* ══ SPLASH ══ */
         #splash-screen {
@@ -220,6 +246,9 @@
         }
         .btn-copy:hover { background:rgba(37,99,235,0.12); color:var(--cyan-light); }
         .btn-copy.copied { color:var(--green-light); }
+
+        /* Timer badge in close-min button */
+        .timer-cnt { font-size:11px; font-weight:800; color:var(--cyan-light); background:rgba(6,182,212,0.12); border:1px solid rgba(6,182,212,0.3); border-radius:20px; padding:2px 9px; margin-left:4px; }
 
         .welcome-btns { display:flex; gap:10px; }
         .btn-wclose-min {
@@ -756,6 +785,11 @@
         input:checked + .slider { border-color:rgba(96,165,250,0.5); box-shadow:0 0 12px rgba(37,99,235,0.4); background:rgba(37,99,235,0.15); }
         input:checked + .slider::before { transform:translateX(20px); background:var(--blue-light); box-shadow:0 0 10px rgba(37,99,235,0.7); }
 
+        .divider {
+            width:100%; max-width:460px; height:1px; margin:20px 0;
+            background:linear-gradient(to right,transparent,rgba(96,165,250,0.2),transparent);
+        }
+
         .slider-card {
             width:100%; max-width:460px;
             background:rgba(15,23,42,0.65); border:1px solid rgba(96,165,250,0.1);
@@ -848,152 +882,124 @@
             letter-spacing:0.3px; transition:all 0.2s;
         }
         .gun-chip:hover { transform:scale(1.05); }
-        .gc-blue   { border-color:rgba(96,165,250,0.4); color:#93c5fd; }
-        .gc-cyan   { border-color:rgba(103,232,249,0.4); color:#67e8f9; }
-        .gc-grn    { border-color:rgba(110,231,183,0.4); color:#6ee7b7; }
-        .gc-red    { border-color:rgba(252,165,165,0.4); color:#fca5a5; }
-        .gc-ylw    { border-color:rgba(253,230,138,0.4); color:#fde68a; }
-        .gc-org    { border-color:rgba(253,186,116,0.4); color:#fdba74; }
-        .gc-prp    { border-color:rgba(196,181,253,0.4); color:#c4b5fd; }
-        .gc-pnk    { border-color:rgba(249,168,212,0.4); color:#f9a8d4; }
-
-        .gun-row { display:flex; flex-wrap:wrap; gap:3px; margin:3px 0; }
+        .gun-row { display:flex; flex-wrap:wrap; gap:4px; margin:4px 0; }
+        .gc-blue  { border-color:rgba(96,165,250,0.4); color:#60a5fa; }
+        .gc-cyan  { border-color:rgba(103,232,249,0.4); color:#67e8f9; }
+        .gc-grn   { border-color:rgba(110,231,183,0.4); color:#6ee7b7; }
+        .gc-ylw   { border-color:rgba(253,230,138,0.4); color:#fde68a; }
+        .gc-org   { border-color:rgba(253,186,116,0.4); color:#fdba74; }
+        .gc-red   { border-color:rgba(252,165,165,0.4); color:#fca5a5; }
+        .gc-prp   { border-color:rgba(196,181,253,0.4); color:#c4b5fd; }
+        .gc-pnk   { border-color:rgba(249,168,212,0.4); color:#f9a8d4; }
 
         .term-prog-wrap { margin:4px 0; }
-        .term-prog-bar { height:4px; border-radius:4px; background:rgba(30,41,59,0.8); overflow:hidden; margin-top:5px; }
-        .term-prog-fill {
-            height:100%; border-radius:4px;
-            background:linear-gradient(90deg,var(--blue),var(--cyan));
-            box-shadow:0 0 8px rgba(37,99,235,0.6); width:0%; transition:width 0.5s ease-out;
-            position:relative; overflow:hidden;
-        }
-        .term-prog-fill::after {
-            content:''; position:absolute; top:0; left:-50%; width:50%; height:100%;
-            background:linear-gradient(to right,transparent,rgba(255,255,255,0.4),transparent);
-            animation:progGlide 1s linear infinite;
-        }
-        @keyframes progGlide { 100%{ left:200%; } }
-
-        .blink-cur { display:inline-block; width:8px; height:13px; background:var(--blue-light); vertical-align:middle; animation:blinkCur 0.9s step-end infinite; margin-left:2px; }
+        .term-prog-bar { height:5px; border-radius:5px; background:rgba(30,41,59,0.8); overflow:hidden; margin-top:4px; border:1px solid rgba(96,165,250,0.08); }
+        .term-prog-fill { height:100%; width:0%; border-radius:5px; background:linear-gradient(90deg,var(--blue),var(--cyan)); box-shadow:0 0 8px rgba(37,99,235,0.6); transition:width 0.4s ease; }
+        .blink-cur { display:inline-block; width:8px; height:14px; background:var(--cyan-light); vertical-align:middle; animation:blinkCur 0.8s step-end infinite; margin-left:3px; }
         @keyframes blinkCur { 0%,100%{ opacity:1; } 50%{ opacity:0; } }
-
         .terminal-inner::-webkit-scrollbar { width:4px; }
-        .terminal-inner::-webkit-scrollbar-thumb { background:rgba(96,165,250,0.3); border-radius:2px; }
+        .terminal-inner::-webkit-scrollbar-thumb { background:rgba(96,165,250,0.2); border-radius:2px; }
 
-        .modal-overlay { position:fixed; inset:0; background:rgba(2,8,23,0.85); backdrop-filter:blur(14px); z-index:9000; display:none; justify-content:center; align-items:center; }
+        /* Activation Modal */
+        .modal-overlay {
+            position:fixed; inset:0; background:rgba(2,8,23,0.82);
+            backdrop-filter:blur(12px); z-index:88880;
+            display:none; justify-content:center; align-items:center;
+        }
         .modal-overlay.show { display:flex; animation:fadeIn 0.25s ease; }
-        @keyframes fadeIn { from{ opacity:0; } to{ opacity:1; } }
+        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
         .modal-box {
-            background:linear-gradient(145deg,rgba(15,23,42,0.97),rgba(30,41,59,0.95));
-            border:1px solid rgba(96,165,250,0.25); border-radius:24px; padding:38px 32px;
-            text-align:center; backdrop-filter:blur(24px);
-            box-shadow:0 30px 80px rgba(37,99,235,0.2),0 0 0 1px rgba(96,165,250,0.08);
-            position:relative; min-width:270px; animation:popIn 0.4s cubic-bezier(0.19,1,0.22,1); overflow:hidden;
+            background:linear-gradient(145deg,rgba(15,23,42,0.98),rgba(30,41,59,0.95));
+            border:1px solid rgba(96,165,250,0.28); border-radius:24px;
+            padding:36px 30px; text-align:center; min-width:260px; position:relative;
+            box-shadow:0 25px 80px rgba(37,99,235,0.2);
+            animation:popIn 0.4s cubic-bezier(0.19,1,0.22,1);
         }
-        .modal-box::before {
-            content:''; position:absolute; top:0; left:0; right:0; height:2px;
-            background:linear-gradient(90deg,transparent,var(--blue),var(--cyan),var(--blue),transparent);
-            background-size:200%; animation:topFlow 2.5s linear infinite;
-        }
-        @keyframes popIn { from{ transform:scale(0.7); opacity:0; } to{ transform:scale(1); opacity:1; } }
+        @keyframes popIn { from{transform:scale(0.75);opacity:0;} to{transform:scale(1);opacity:1;} }
 
         .orbit-ring {
-            width:100px; height:100px; border-radius:50%;
-            border:1.5px dashed rgba(96,165,250,0.4);
-            margin:0 auto 22px; display:flex; justify-content:center; align-items:center;
-            position:relative; animation:spinM 3.5s linear infinite;
+            width:90px; height:90px; border-radius:50%; border:2px dashed rgba(96,165,250,0.3);
+            margin:0 auto 20px; display:flex; justify-content:center; align-items:center;
+            position:relative; animation:checkSpin 3s linear infinite;
         }
-        @keyframes spinM { 100%{ transform:rotate(360deg); } }
+        .orbit-ring::before {
+            content:''; position:absolute; top:-5px; left:50%; transform:translateX(-50%);
+            width:10px; height:10px; border-radius:50%;
+            background:var(--blue-light); box-shadow:0 0 10px var(--blue-glow);
+        }
         .orbit-center {
-            width:68px; height:68px;
-            background:linear-gradient(135deg,rgba(37,99,235,0.15),rgba(6,182,212,0.1));
-            border:1.5px solid rgba(96,165,250,0.3); border-radius:50%;
-            display:flex; align-items:center; justify-content:center;
-            animation:spinMR 3.5s linear infinite,orbGlow 1.2s alternate infinite;
-            font-size:26px; color:var(--blue-light);
+            width:64px; height:64px; border-radius:50%;
+            background:rgba(37,99,235,0.12); border:1.5px solid rgba(96,165,250,0.4);
+            display:flex; justify-content:center; align-items:center;
+            font-size:24px; color:var(--cyan);
+            animation:checkSpinRev 3s linear infinite,checkIconGlow 1.5s ease-in-out infinite;
         }
-        @keyframes spinMR { 100%{ transform:rotate(-360deg); } }
-        @keyframes orbGlow { from{ box-shadow:0 0 12px rgba(37,99,235,0.3); } to{ box-shadow:0 0 30px rgba(37,99,235,0.6),0 0 50px rgba(6,182,212,0.2); } }
-        .orbit-ring::before { content:''; position:absolute; width:10px; height:10px; background:var(--blue-light); border-radius:50%; top:-5px; left:50%; transform:translateX(-50%); box-shadow:0 0 12px var(--blue-glow); }
-        .orbit-ring::after  { content:''; position:absolute; width:7px;  height:7px;  background:var(--cyan); border-radius:50%; bottom:-4px; left:50%; transform:translateX(-50%); box-shadow:0 0 8px var(--cyan-glow); }
-        .modal-box.deact .orbit-center { border-color:rgba(255,255,255,0.18); color:#334155; }
-        .modal-box.deact .orbit-ring { border-color:rgba(255,255,255,0.1); }
-        .modal-box.deact .orbit-ring::before { background:#334155; box-shadow:none; }
-        .modal-box.deact .orbit-ring::after  { background:#1e293b; box-shadow:none; }
-
-        .modal-title { font-size:16px; font-weight:800; color:#f1f5f9; font-family:'Nunito',sans-serif; margin-bottom:5px; }
-        .modal-sub   { font-size:12px; color:#475569; margin-bottom:20px; font-family:'Nunito',sans-serif; }
-        .step-list { display:flex; flex-direction:column; gap:7px; text-align:left; }
-        .step-item { display:flex; align-items:center; gap:9px; font-size:12.5px; color:#334155; transition:0.4s; opacity:0; font-family:'Nunito',sans-serif; }
+        .modal-title { font-size:15px; font-weight:800; color:#f1f5f9; font-family:'Nunito',sans-serif; margin-bottom:5px; }
+        .modal-sub { font-size:12px; color:#475569; margin-bottom:20px; font-family:'Nunito',sans-serif; }
+        .step-list { display:flex; flex-direction:column; gap:8px; text-align:left; }
+        .step-item {
+            display:flex; align-items:center; gap:9px;
+            font-size:12px; color:#475569; font-family:'Nunito',sans-serif;
+            opacity:0.35; transition:all 0.4s;
+        }
         .step-item.done { color:#cbd5e1; opacity:1; }
-        .step-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.1); flex-shrink:0; transition:0.35s; }
         .step-item.done .step-dot { background:var(--green); box-shadow:0 0 8px var(--green-glow); }
-
-        .toast-wrap { position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:99998; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
-        .toast {
-            background:rgba(15,23,42,0.95); border:1px solid rgba(96,165,250,0.3);
-            color:#e2e8f0; padding:11px 20px; border-radius:30px; font-size:13px; font-weight:600;
-            font-family:'Nunito',sans-serif; backdrop-filter:blur(16px);
-            display:flex; align-items:center; gap:10px; white-space:nowrap;
-            animation:toastIn 0.3s ease-out,toastOut 0.3s ease-in 2.5s forwards;
-            box-shadow:0 8px 32px rgba(37,99,235,0.15);
-        }
-        @keyframes toastIn  { from{ transform:translateY(-18px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
-        @keyframes toastOut { from{ opacity:1; } to{ transform:translateY(-18px); opacity:0; } }
-
-        .ripple-overlay { position:fixed; inset:0; z-index:7999; display:none; justify-content:center; align-items:center; pointer-events:none; }
-        .ripple-overlay.show { display:flex; }
-        .ripple-circle { width:10px; height:10px; border-radius:50%; border:2px solid rgba(96,165,250,0.55); animation:rippleExp 0.9s ease-out forwards; }
-        @keyframes rippleExp { 0%{ transform:scale(1); opacity:1; } 100%{ transform:scale(50); opacity:0; } }
-
-        .divider { width:100%; max-width:460px; height:1px; background:linear-gradient(to right,transparent,rgba(96,165,250,0.2),transparent); margin:18px 0; }
+        .step-dot { width:7px; height:7px; border-radius:50%; background:rgba(96,165,250,0.2); flex-shrink:0; transition:0.3s; }
+        .modal-box.deact .orbit-center { border-color:rgba(255,255,255,0.2); color:#475569; }
+        .modal-box.deact .orbit-ring { border-color:rgba(255,255,255,0.12); }
+        .modal-box.deact .orbit-ring::before { background:#475569; box-shadow:none; }
 
         .logout-btn {
-            margin-top:16px; padding:11px 32px;
-            background:transparent; border:1px solid rgba(239,68,68,0.25); border-radius:30px;
-            color:#ef4444; font-size:12.5px; font-weight:600; font-family:'Nunito',sans-serif;
-            cursor:pointer; display:flex; align-items:center; gap:8px; transition:0.25s;
+            width:100%; max-width:460px; margin-top:22px;
+            padding:13px; background:transparent;
+            border:1px solid rgba(239,68,68,0.25); border-radius:12px;
+            color:rgba(239,68,68,0.5); font-size:13px; font-weight:700;
+            font-family:'Nunito',sans-serif; cursor:pointer;
+            display:flex; align-items:center; justify-content:center; gap:8px;
+            transition:0.25s; letter-spacing:0.5px;
         }
-        .logout-btn:hover { border-color:rgba(239,68,68,0.5); background:rgba(239,68,68,0.06); box-shadow:0 0 16px rgba(239,68,68,0.15); }
+        .logout-btn:hover { border-color:rgba(239,68,68,0.5); color:var(--red); background:rgba(239,68,68,0.05); }
 
-        .version-tag { font-size:10px; color:#1e293b; margin-top:12px; font-family:'JetBrains Mono',monospace; letter-spacing:1px; }
-
-        ::-webkit-scrollbar { width:3px; }
-        ::-webkit-scrollbar-thumb { background:rgba(96,165,250,0.25); border-radius:2px; }
+        .version-tag {
+            width:100%; max-width:460px; text-align:center;
+            font-size:11px; color:#1e293b; margin-top:10px;
+            font-family:'JetBrains Mono',monospace; letter-spacing:1px;
+        }
     </style>
 </head>
 <body>
 
-<!-- ══ SPLASH SCREEN ══ -->
-<div id="splash-screen">
-    <div class="splash-ring">
-        <img src="https://sf-static.upanhlaylink.com/img/image_20260313c8e5ff3531d34404575f229fe201d9ac.jpg"
-             onerror="this.src='https://ui-avatars.com/api/?name=VIP&background=2563eb&color=fff&size=200'" alt="Logo">
-    </div>
-    <div class="splash-title">AIMLOCK SUPER V3</div>
-    <div class="splash-sub">Đang kết nối máy chủ Sever...</div>
-    <div class="splash-spinner"></div>
-</div>
-
-<!-- ══ BLOCKED OVERLAY ══ -->
-<div class="blocked-overlay" id="blocked-overlay">
-    <div class="blocked-icon"><i class="fa-solid fa-ban"></i></div>
-    <div class="blocked-title">Key Không Hợp Lệ!</div>
-    <div class="blocked-msg" id="blocked-msg">Key của bạn đã hết hạn hoặc bị vô hiệu hóa.<br>Vui lòng liên hệ admin để gia hạn.</div>
-    <div class="blocked-zalo"><i class="fa-brands fa-facebook-messenger"></i> Zalo: 0379435045</div>
-    <button class="btn-blocked-logout" onclick="doLogout()">
-        <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-    </button>
-</div>
-
 <div class="hex-bg" id="hex-bg"></div>
 <div class="scan-overlay"></div>
 <canvas id="particles-canvas"></canvas>
+<div class="ripple-overlay" id="ripple-overlay"></div>
 <div class="toast-wrap" id="toast-wrap"></div>
-<div class="ripple-overlay" id="ripple-overlay"><div class="ripple-circle"></div></div>
+
+<!-- ══ SPLASH ══ -->
+<div id="splash-screen">
+    <div class="splash-ring">
+        <img src="https://sf-static.upanhlaylink.com/img/image_20260313c8e5ff3531d34404575f229fe201d9ac.jpg"
+             onerror="this.src='https://ui-avatars.com/api/?name=VIP&background=2563eb&color=fff&size=200&bold=true'"
+             alt="Logo">
+    </div>
+    <div class="splash-title">AIMLOCK SUPER V3</div>
+    <div class="splash-sub">Đang khởi động hệ thống...</div>
+    <div class="splash-spinner"></div>
+</div>
+
+<!-- ══ BLOCKED ══ -->
+<div class="blocked-overlay" id="blocked-overlay">
+    <div class="blocked-icon"><i class="fa-solid fa-ban"></i></div>
+    <div class="blocked-title">Truy Cập Bị Chặn!</div>
+    <div class="blocked-msg" id="blocked-msg">Key của bạn đã hết hạn hoặc bị vô hiệu hóa.<br>Vui lòng liên hệ admin để gia hạn.</div>
+    <div class="blocked-zalo"><i class="fa-brands fa-facebook-messenger"></i> Zalo: 0379435045</div>
+    <button class="btn-blocked-logout" onclick="doLogout()">
+        <i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất
+    </button>
+</div>
 
 <!-- ══════════════════════════════════
-     WELCOME MODAL
+     WELCOME MODAL — Link load từ Firebase real-time
 ══════════════════════════════════ -->
 <div class="welcome-overlay" id="welcome-overlay">
     <div class="welcome-card">
@@ -1001,25 +1007,25 @@
             <div class="welcome-icon-wrap">
                 <i class="fa-solid fa-gift"></i>
             </div>
-            <div class="welcome-badge-pill">
-                <i class="fa-solid fa-star"></i> FREE KEY HÀNG NGÀY
+            <div class="welcome-badge-pill" id="wm-badge">
+                <i class="fa-solid fa-star"></i> <span id="wm-badge-text">FREE KEY HÀNG NGÀY</span>
             </div>
-            <div class="welcome-headline">Lấy Key VIP <span>Miễn Phí</span><br>ngay hôm nay!</div>
+            <div class="welcome-headline" id="wm-headline">Lấy Key VIP <span>Miễn Phí</span><br>ngay hôm nay!</div>
         </div>
         <div class="welcome-body">
-            <p class="welcome-desc">
+            <p class="welcome-desc" id="wm-desc">
                 Sao chép <strong>Link bên dưới để lấy key miễn phí ngay nào!</strong><br>
                 Dán vào ô nhập key rồi ấn <strong>Đăng Nhập</strong>.<br>
                 Key lỗi? Vượt lại link để lấy key mới 🕊️
             </p>
             <div class="welcome-steps">
-                <div class="welcome-step"><div class="step-num">1</div>Nhấn COPY để sao chép key bên dưới</div>
+                <div class="welcome-step"><div class="step-num">1</div>Nhấn COPY để sao chép link lấy key</div>
                 <div class="welcome-step"><div class="step-num">2</div>Mua Đồ Chơi VIP — Zalo: <strong>0379435045</strong></div>
                 <div class="welcome-step"><div class="step-num">3</div>Dán key vào ô nhập key và ấn Đăng Nhập</div>
                 <div class="welcome-step"><div class="step-num">4</div>Cảm ơn bạn đã tin dùng! 💙</div>
             </div>
             <div class="link-row">
-                <input class="link-input" id="key-link-input" type="text" value="https://link4m.net/bLaAFtok" readonly>
+                <input class="link-input" id="key-link-input" type="text" value="Đang tải link..." readonly>
                 <button class="btn-copy" id="btn-copy-link" onclick="copyLink()">
                     <i class="fa-solid fa-copy" id="copy-icon"></i>
                     <span id="copy-label">COPY</span>
@@ -1027,7 +1033,8 @@
             </div>
             <div class="welcome-btns">
                 <button class="btn-wclose-min" onclick="closeWelcome(true)">
-                    <i class="fa-regular fa-clock"></i> 3 phút
+                    <i class="fa-regular fa-clock"></i>
+                    <span id="wm-countdown-text">3 phút</span>
                 </button>
                 <button class="btn-wclose-main" onclick="closeWelcome(false)">
                     <i class="fa-solid fa-xmark"></i> Đóng Ngay
@@ -1460,8 +1467,7 @@
 
 <script>
 /* ════════════════════════════════════════════════
-   FIREBASE CONFIG — THAY BẰNG CONFIG DỰ ÁN CỦA BẠN
-   Firebase Console → Project Settings → Your apps → Web app
+   FIREBASE CONFIG
 ════════════════════════════════════════════════ */
 const firebaseConfig = {
     apiKey: "AIzaSyAb6aAwvxmEtSKN4751w8fDr0OvBfhWv5s",
@@ -1482,7 +1488,7 @@ try {
     db = firebase.database();
     firebaseReady = true;
 } catch(e) {
-    console.warn('Sever init error:', e);
+    console.warn('Firebase init error:', e);
 }
 
 /* ════════════════════════════════════════════════
@@ -1516,10 +1522,10 @@ function setFbStatus(ok) {
     if (!dot) return;
     if (ok) {
         dot.classList.add('connected');
-        txt.textContent = 'Sever: Đã kết nối';
+        txt.textContent = 'Server: Đã kết nối';
     } else {
         dot.classList.remove('connected');
-        txt.textContent = 'Sever: Chưa kết nối';
+        txt.textContent = 'Server: Chưa kết nối';
     }
 }
 
@@ -1530,6 +1536,26 @@ if (firebaseReady && db) {
 } else {
     setFbStatus(false);
 }
+
+/* ════════════════════════════════════════════════
+   LOAD WELCOME MODAL LINK TỪ FIREBASE — REAL-TIME
+   Admin cập nhật qua admp.html → tự cập nhật ngay
+════════════════════════════════════════════════ */
+function loadModalLink() {
+    if (!firebaseReady || !db) return;
+    db.ref('settings/modalLink').on('value', snap => {
+        const data = snap.val() || {};
+        const inp = document.getElementById('key-link-input');
+        if (inp && data.url) inp.value = data.url;
+        const badge = document.getElementById('wm-badge-text');
+        if (badge && data.badge) badge.textContent = data.badge;
+        const hl = document.getElementById('wm-headline');
+        if (hl && data.title) hl.innerHTML = data.title;
+        const desc = document.getElementById('wm-desc');
+        if (desc && data.desc) desc.innerHTML = data.desc;
+    });
+}
+loadModalLink();
 
 /* ════════════════════════════════════════════════
    PARTICLES
@@ -1628,14 +1654,41 @@ function showRipple(){
 }
 
 /* ════════════════════════════════════════════════
-   WELCOME MODAL
+   WELCOME MODAL — COUNTDOWN + HIDE LOGIC
 ════════════════════════════════════════════════ */
+let wmCountdown = 180;
+let wmTimerInterval = null;
+
+function startWMCountdown() {
+    wmCountdown = 180;
+    clearInterval(wmTimerInterval);
+    const el = document.getElementById('wm-countdown-text');
+    wmTimerInterval = setInterval(() => {
+        wmCountdown--;
+        if (el) {
+            const m = Math.floor(wmCountdown / 60);
+            const s = wmCountdown % 60;
+            el.textContent = m > 0 ? `${m}:${String(s).padStart(2,'0')}` : `${s}s`;
+        }
+        if (wmCountdown <= 0) {
+            clearInterval(wmTimerInterval);
+            closeWelcome(false);
+        }
+    }, 1000);
+}
+
 (function(){
     const h = localStorage.getItem(LS_HIDE_KEY);
-    if(h && Date.now() < parseInt(h)) document.getElementById('welcome-overlay').style.display='none';
+    if(h && Date.now() < parseInt(h)) {
+        const ov = document.getElementById('welcome-overlay');
+        if (ov) ov.style.display = 'none';
+        return;
+    }
+    startWMCountdown();
 })();
 
 function closeWelcome(forMin){
+    clearInterval(wmTimerInterval);
     if(forMin){
         localStorage.setItem(LS_HIDE_KEY, Date.now()+3*60*1000);
         showToast('Đã đóng trong 3 phút','fa-clock','#94a3b8');
@@ -1653,7 +1706,7 @@ function copyLink(){
     const lb  = document.getElementById('copy-label');
     btn.classList.add('copied');
     ic.className = 'fa-solid fa-check'; lb.textContent = 'ĐÃ COPY';
-    showToast('Đã sao chép key!','fa-copy','#6ee7b7');
+    showToast('Đã sao chép link!','fa-copy','#6ee7b7');
     setTimeout(()=>{ btn.classList.remove('copied'); ic.className='fa-solid fa-copy'; lb.textContent='COPY'; }, 2600);
 }
 
@@ -1697,7 +1750,7 @@ function onKeyInput(inp){
    HELPER — Firebase path safe
 ════════════════════════════════════════════════ */
 function keyToPath(k) {
-    return k.replace(/[.#$\[\]]/g, '_');
+    return k.replace(/[.#$\[\]/]/g, '_');
 }
 
 /* ════════════════════════════════════════════════
@@ -1727,7 +1780,6 @@ function timeLeft(ts) {
 function updateDashboardUI(keyVal, keyData) {
     const expiresAt = keyData.expiresAt || null;
 
-    // Key strip
     const stripVal = document.getElementById('key-strip-val');
     const stripExp = document.getElementById('key-strip-expire');
     if (stripVal) {
@@ -1746,7 +1798,6 @@ function updateDashboardUI(keyVal, keyData) {
         }
     }
 
-    // Banner expiry
     const bannerExpText = document.getElementById('banner-expiry-text');
     const bannerExpIcon = document.getElementById('banner-expiry-icon');
     if (!expiresAt) {
@@ -1764,7 +1815,6 @@ function updateDashboardUI(keyVal, keyData) {
         }
     }
 
-    // Note
     if (keyData.note) {
         showToast(`Ghi chú: ${keyData.note}`, 'fa-note-sticky', '#f59e0b');
     }
@@ -1781,8 +1831,7 @@ function showBlockedOverlay(msg) {
 }
 
 /* ════════════════════════════════════════════════
-   GIÁM SÁT KEY REAL-TIME (Key Watcher)
-   Admin vô hiệu hóa key → tự động hiện blocked
+   GIÁM SÁT KEY REAL-TIME
 ════════════════════════════════════════════════ */
 let keyWatcherRef = null;
 
@@ -1855,7 +1904,7 @@ async function verifyKeyFirebase(keyVal) {
 }
 
 /* ════════════════════════════════════════════════
-   KEY CHECK MODAL — Animation (giữ nguyên toàn bộ)
+   KEY CHECK MODAL — Animation
 ════════════════════════════════════════════════ */
 let checkTids = [];
 function clearCheckTids(){ checkTids.forEach(t=>clearTimeout(t)); checkTids=[]; }
@@ -1873,7 +1922,6 @@ function showCheckModal(isValid, onSuccess, failMsg){
     const resFail = document.getElementById('check-result-fail');
     const failTxt = document.getElementById('check-fail-text');
 
-    // reset
     steps.forEach(s=>{ s.classList.remove('done','active'); });
     fill.style.width = '0%'; pct.textContent = '0%';
     resOk.style.display = 'none'; resFail.style.display = 'none';
@@ -1927,7 +1975,7 @@ function showCheckModal(isValid, onSuccess, failMsg){
 }
 
 /* ════════════════════════════════════════════════
-   LOGIN (Firebase)
+   LOGIN
 ════════════════════════════════════════════════ */
 async function doLogin(){
     const val     = document.getElementById('key-input').value.trim();
@@ -1947,43 +1995,34 @@ async function doLogin(){
         return;
     }
 
-    // Disable button trong khi xác thực
     btn.disabled = true;
     btnTxt.textContent = 'Đang xác thực...';
     showRipple();
 
     try {
         let keyData;
-
         if (firebaseReady && db) {
             keyData = await verifyKeyFirebase(val);
         } else {
-            throw new Error('Firebase chưa kết nối. Kiểm tra cấu hình!');
+            throw new Error('Firebase chưa kết nối. Kiểm tra lại mạng!');
         }
 
-        // Thành công — lưu key + cache data
         localStorage.setItem(LS_KEY, val);
         localStorage.setItem(LS_KEYDATA, JSON.stringify(keyData));
 
-        // Hiện check modal với animation
-        showCheckModal(true, () => {
+        // Đóng welcome modal nếu còn
+        const wmo = document.getElementById('welcome-overlay');
+        if (wmo && wmo.style.display !== 'none') closeWelcome(false);
+
+        showCheckModal(true, ()=>{
             updateDashboardUI(val, keyData);
             startKeyWatcher(val);
         });
-
     } catch(e) {
-        // Thất bại — show animation thất bại
-        const msg = e.message || 'Key không hợp lệ!';
+        const msg = e.message || 'Lỗi không xác định!';
+        showCheckModal(false, null, msg);
         err.style.display = 'flex';
         errText.textContent = msg;
-
-        document.getElementById('key-input').animate([
-            {transform:'translateX(-6px)'},{transform:'translateX(6px)'},
-            {transform:'translateX(-5px)'},{transform:'translateX(5px)'},
-            {transform:'translateX(0)'}
-        ],{duration:380});
-
-        showCheckModal(false, null, msg);
     } finally {
         btn.disabled = false;
         btnTxt.textContent = 'Đăng Nhập';
@@ -1991,7 +2030,7 @@ async function doLogin(){
 }
 
 /* ════════════════════════════════════════════════
-   AUTO-LOGIN — Kiểm tra key đã lưu khi mở app
+   AUTO LOGIN
 ════════════════════════════════════════════════ */
 async function checkAutoLogin() {
     const savedKey = localStorage.getItem(LS_KEY);
@@ -2021,7 +2060,6 @@ async function checkAutoLogin() {
         startSessionTimer();
         startKeyWatcher(savedKey);
 
-        // Ẩn welcome nếu đang hiện
         const ov = document.getElementById('welcome-overlay');
         if (ov && ov.style.display !== 'none') closeWelcome(false);
 
@@ -2189,23 +2227,23 @@ function clearMT(){ modTids.forEach(t=>clearTimeout(t)); modTids=[]; }
 function mt(fn,ms){ const id=setTimeout(fn,ms); modTids.push(id); }
 
 const ALL_GUNS = [
-    {name:'MP40',       cls:'gc-blue',  dmg:48, rng:'45m',  spd:'★★★★★', rpm:857,  type:'SMG',    emoji:'🔫'},
-    {name:'UMP45',      cls:'gc-grn',   dmg:44, rng:'40m',  spd:'★★★★★', rpm:750,  type:'SMG',    emoji:'🔫'},
-    {name:'P90',        cls:'gc-cyan',  dmg:40, rng:'38m',  spd:'★★★★★', rpm:900,  type:'SMG',    emoji:'🔫'},
-    {name:'Thompson',   cls:'gc-ylw',   dmg:46, rng:'42m',  spd:'★★★★☆', rpm:800,  type:'SMG',    emoji:'🔫'},
-    {name:'M4A1',       cls:'gc-cyan',  dmg:56, rng:'65m',  spd:'★★★★☆', rpm:750,  type:'AR',     emoji:'🔫'},
-    {name:'AKM',        cls:'gc-org',   dmg:62, rng:'70m',  spd:'★★★☆☆', rpm:600,  type:'AR',     emoji:'🔫'},
-    {name:'SCAR-L',     cls:'gc-blue',  dmg:53, rng:'62m',  spd:'★★★★☆', rpm:700,  type:'AR',     emoji:'🔫'},
-    {name:'Groza',      cls:'gc-prp',   dmg:58, rng:'55m',  spd:'★★★★☆', rpm:715,  type:'AR',     emoji:'🔫'},
-    {name:'FAMAS',      cls:'gc-pnk',   dmg:55, rng:'60m',  spd:'★★★★☆', rpm:780,  type:'AR',     emoji:'🔫'},
-    {name:'AWM',        cls:'gc-red',   dmg:105,rng:'∞',    spd:'★☆☆☆☆', rpm:50,   type:'Sniper', emoji:'🎯'},
-    {name:'M24',        cls:'gc-org',   dmg:88, rng:'∞',    spd:'★★☆☆☆', rpm:75,   type:'Sniper', emoji:'🎯'},
-    {name:'Kar98k',     cls:'gc-ylw',   dmg:94, rng:'∞',    spd:'★★☆☆☆', rpm:55,   type:'Sniper', emoji:'🎯'},
-    {name:'Mosin',      cls:'gc-grn',   dmg:90, rng:'∞',    spd:'★★☆☆☆', rpm:60,   type:'Sniper', emoji:'🎯'},
-    {name:'Desert Eagle',cls:'gc-ylw', dmg:71, rng:'35m',  spd:'★★★☆☆', rpm:300,  type:'Pistol', emoji:'💥'},
-    {name:'M1014',      cls:'gc-red',   dmg:80, rng:'18m',  spd:'★★★☆☆', rpm:200,  type:'Shotgun',emoji:'💣'},
-    {name:'M249',       cls:'gc-grn',   dmg:45, rng:'60m',  spd:'★★★☆☆', rpm:850,  type:'LMG',    emoji:'🔫'},
-    {name:'Minigun',    cls:'gc-prp',   dmg:42, rng:'55m',  spd:'★★★☆☆', rpm:1200, type:'LMG',    emoji:'🔫'},
+    {name:'MP40',         cls:'gc-blue',  dmg:48,  rng:'45m',  spd:'★★★★★', rpm:857,  type:'SMG',     emoji:'🔫'},
+    {name:'UMP45',        cls:'gc-grn',   dmg:44,  rng:'40m',  spd:'★★★★★', rpm:750,  type:'SMG',     emoji:'🔫'},
+    {name:'P90',          cls:'gc-cyan',  dmg:40,  rng:'38m',  spd:'★★★★★', rpm:900,  type:'SMG',     emoji:'🔫'},
+    {name:'Thompson',     cls:'gc-ylw',   dmg:46,  rng:'42m',  spd:'★★★★☆', rpm:800,  type:'SMG',     emoji:'🔫'},
+    {name:'M4A1',         cls:'gc-cyan',  dmg:56,  rng:'65m',  spd:'★★★★☆', rpm:750,  type:'AR',      emoji:'🔫'},
+    {name:'AKM',          cls:'gc-org',   dmg:62,  rng:'70m',  spd:'★★★☆☆', rpm:600,  type:'AR',      emoji:'🔫'},
+    {name:'SCAR-L',       cls:'gc-blue',  dmg:53,  rng:'62m',  spd:'★★★★☆', rpm:700,  type:'AR',      emoji:'🔫'},
+    {name:'Groza',        cls:'gc-prp',   dmg:58,  rng:'55m',  spd:'★★★★☆', rpm:715,  type:'AR',      emoji:'🔫'},
+    {name:'FAMAS',        cls:'gc-pnk',   dmg:55,  rng:'60m',  spd:'★★★★☆', rpm:780,  type:'AR',      emoji:'🔫'},
+    {name:'AWM',          cls:'gc-red',   dmg:105, rng:'∞',    spd:'★☆☆☆☆', rpm:50,   type:'Sniper',  emoji:'🎯'},
+    {name:'M24',          cls:'gc-org',   dmg:88,  rng:'∞',    spd:'★★☆☆☆', rpm:75,   type:'Sniper',  emoji:'🎯'},
+    {name:'Kar98k',       cls:'gc-ylw',   dmg:94,  rng:'∞',    spd:'★★☆☆☆', rpm:55,   type:'Sniper',  emoji:'🎯'},
+    {name:'Mosin',        cls:'gc-grn',   dmg:90,  rng:'∞',    spd:'★★☆☆☆', rpm:60,   type:'Sniper',  emoji:'🎯'},
+    {name:'Desert Eagle', cls:'gc-ylw',   dmg:71,  rng:'35m',  spd:'★★★☆☆', rpm:300,  type:'Pistol',  emoji:'💥'},
+    {name:'M1014',        cls:'gc-red',   dmg:80,  rng:'18m',  spd:'★★★☆☆', rpm:200,  type:'Shotgun', emoji:'💣'},
+    {name:'M249',         cls:'gc-grn',   dmg:45,  rng:'60m',  spd:'★★★☆☆', rpm:850,  type:'LMG',     emoji:'🔫'},
+    {name:'Minigun',      cls:'gc-prp',   dmg:42,  rng:'55m',  spd:'★★★☆☆', rpm:1200, type:'LMG',     emoji:'🔫'},
 ];
 
 function addLine(html,delay){
@@ -2342,10 +2380,9 @@ function stopModule(){
 }
 
 /* ════════════════════════════════════════════════
-   KHỞI ĐỘNG APP
+   
 ════════════════════════════════════════════════ */
 window.addEventListener('load', async () => {
-    // Đợi Firebase init
     await new Promise(res => setTimeout(res, firebaseReady ? 900 : 1400));
     await checkAutoLogin();
 });
