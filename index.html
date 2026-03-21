@@ -1,0 +1,2525 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AIMLOCK SUPER V3 — VIP PRO</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- ══ FIREBASE SDK ══ -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+        :root {
+            --blue: #2563eb;
+            --blue-light: #60a5fa;
+            --blue-glow: rgba(37,99,235,0.55);
+            --cyan: #06b6d4;
+            --cyan-light: #67e8f9;
+            --cyan-glow: rgba(6,182,212,0.5);
+            --green: #10b981;
+            --green-light: #6ee7b7;
+            --green-glow: rgba(16,185,129,0.5);
+            --red: #ef4444;
+            --red-glow: rgba(239,68,68,0.5);
+            --yellow: #f59e0b;
+            --purple: #8b5cf6;
+            --purple-light: #c4b5fd;
+            --purple-glow: rgba(139,92,246,0.5);
+            --orange: #f97316;
+            --pink: #ec4899;
+            --surface: rgba(15,23,42,0.7);
+            --surface-2: rgba(30,41,59,0.6);
+            --border: rgba(96,165,250,0.25);
+            --border-bright: rgba(96,165,250,0.55);
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+        html { scroll-behavior:smooth; }
+
+        body {
+            font-family:'Inter',sans-serif;
+            background:#020817; color:#f1f5f9; min-height:100vh; overflow-x:hidden;
+        }
+
+        /* ══ BACKGROUND ══ */
+        body::before {
+            content:''; position:fixed; inset:0;
+            background:
+                radial-gradient(ellipse 80% 60% at 10% 10%, rgba(37,99,235,0.09) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 90% 90%, rgba(139,92,246,0.07) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 50% 50%, rgba(6,182,212,0.05) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 30% at 80% 20%, rgba(16,185,129,0.04) 0%, transparent 55%);
+            z-index:0; pointer-events:none; animation:bgPulse 12s ease-in-out infinite;
+        }
+        @keyframes bgPulse { 0%,100%{ opacity:1; } 50%{ opacity:0.7; } }
+
+        /* ══ CANVAS ══ */
+        #particles-canvas { position:fixed; inset:0; z-index:1; pointer-events:none; }
+
+        /* ══ SCAN LINE ══ */
+        .scan-overlay {
+            position:fixed; inset:0;
+            background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(6,182,212,0.008) 3px,rgba(6,182,212,0.008) 4px);
+            z-index:2; pointer-events:none; animation:scanMove 12s linear infinite;
+        }
+        @keyframes scanMove { 100%{ background-position:0 40px; } }
+
+        /* ══ HEX BG ══ */
+        .hex-bg { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+        .hex { position:absolute; width:56px; height:32px; border:1px solid rgba(37,99,235,0.1); opacity:0; animation:hexFloat linear infinite; }
+        .hex::before,.hex::after { content:''; position:absolute; left:0; width:0; border-left:28px solid transparent; border-right:28px solid transparent; }
+        .hex::before { bottom:100%; border-bottom:16px solid rgba(37,99,235,0.1); }
+        .hex::after  { top:100%; border-top:16px solid rgba(37,99,235,0.1); }
+        @keyframes hexFloat {
+            0%   { transform:translateY(110vh) rotate(0deg); opacity:0; }
+            10%  { opacity:0.5; }
+            90%  { opacity:0.2; }
+            100% { transform:translateY(-20vh) rotate(360deg); opacity:0; }
+        }
+
+        /* ══ RIPPLE ══ */
+        .ripple-overlay {
+            position:fixed; inset:0; z-index:99980; pointer-events:none;
+            background:radial-gradient(circle at 50% 50%, rgba(37,99,235,0.12) 0%, transparent 70%);
+            opacity:0; transition:opacity 0.25s;
+        }
+        .ripple-overlay.show { opacity:1; }
+
+        /* ══ TOAST ══ */
+        .toast-wrap {
+            position:fixed; top:16px; left:50%; transform:translateX(-50%);
+            z-index:99999; display:flex; flex-direction:column; gap:8px;
+            pointer-events:none; max-width:340px; width:calc(100% - 32px);
+        }
+        .toast {
+            background:rgba(15,23,42,0.95); border:1px solid rgba(96,165,250,0.22);
+            color:#e2e8f0; padding:11px 18px; border-radius:14px;
+            font-size:13px; font-weight:600; font-family:'Nunito',sans-serif;
+            backdrop-filter:blur(16px);
+            display:flex; align-items:center; gap:10px;
+            animation:toastIn 0.35s cubic-bezier(0.19,1,0.22,1), toastOut 0.3s ease-in 2.9s forwards;
+            box-shadow:0 8px 30px rgba(0,0,0,0.4);
+        }
+        @keyframes toastIn  { from{ transform:translateY(-20px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+        @keyframes toastOut { from{ opacity:1; } to{ transform:translateY(-16px); opacity:0; } }
+
+        /* ══ SPLASH ══ */
+        #splash-screen {
+            position:fixed; inset:0; background:#020817; z-index:99995;
+            display:flex; flex-direction:column; justify-content:center; align-items:center; gap:18px;
+        }
+        #splash-screen.hidden { display:none; }
+        .splash-ring {
+            width:88px; height:88px; border-radius:50%;
+            border:2.5px solid rgba(96,165,250,0.4);
+            display:flex; align-items:center; justify-content:center;
+            box-shadow:0 0 30px rgba(37,99,235,0.3);
+            animation:splashPulse 1.6s ease-in-out infinite;
+        }
+        .splash-ring img { width:72px; height:72px; border-radius:50%; object-fit:cover; }
+        @keyframes splashPulse { 0%,100%{ box-shadow:0 0 15px rgba(37,99,235,0.3); } 50%{ box-shadow:0 0 40px rgba(37,99,235,0.6),0 0 70px rgba(6,182,212,0.2); } }
+        .splash-title { font-size:18px; font-weight:800; font-family:'Nunito',sans-serif; background:linear-gradient(135deg,var(--blue-light),var(--cyan-light)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; letter-spacing:2px; }
+        .splash-sub { font-size:11px; color:#334155; letter-spacing:1px; font-family:'Nunito',sans-serif; }
+        .splash-spinner { width:36px; height:36px; border-radius:50%; border:2.5px solid rgba(37,99,235,0.15); border-top-color:var(--blue-light); animation:spin 0.85s linear infinite; }
+        @keyframes spin { 100%{ transform:rotate(360deg); } }
+
+        /* ══ BLOCKED OVERLAY ══ */
+        .blocked-overlay {
+            position:fixed; inset:0; background:rgba(2,8,23,0.97); backdrop-filter:blur(16px);
+            z-index:99990; display:none;
+            flex-direction:column; justify-content:center; align-items:center; gap:18px; padding:30px;
+        }
+        .blocked-overlay.show { display:flex; }
+        .blocked-icon { font-size:56px; color:var(--red); filter:drop-shadow(0 0 16px var(--red-glow)); }
+        .blocked-title { font-size:22px; font-weight:800; font-family:'Nunito',sans-serif; color:#f1f5f9; text-align:center; }
+        .blocked-msg { font-size:13px; color:#64748b; text-align:center; line-height:1.7; font-family:'Nunito',sans-serif; }
+        .blocked-zalo { font-size:14px; font-weight:700; color:var(--yellow); font-family:'Nunito',sans-serif; }
+        .btn-blocked-logout {
+            margin-top:6px; padding:11px 28px; background:transparent;
+            border:1px solid rgba(239,68,68,0.35); border-radius:30px;
+            color:var(--red); font-size:13px; font-weight:700; font-family:'Nunito',sans-serif;
+            cursor:pointer; transition:0.25s; display:flex; align-items:center; gap:8px;
+        }
+        .btn-blocked-logout:hover { background:rgba(239,68,68,0.08); }
+
+        /* ══ SCREENS ══ */
+        .screen { position:relative; z-index:10; min-height:100vh; display:none; flex-direction:column; align-items:center; padding:24px 18px 40px; }
+        .screen.active { display:flex; }
+        #login-screen { justify-content:center; }
+
+        /* ══════════════════════════════════
+           WELCOME MODAL
+        ══════════════════════════════════ */
+        .welcome-overlay {
+            position:fixed; inset:0; background:rgba(2,8,23,0.92);
+            backdrop-filter:blur(16px); z-index:99999;
+            display:flex; justify-content:center; align-items:flex-start;
+            padding:14px 18px; overflow-y:auto;
+        }
+        .welcome-overlay.hiding { animation:overlayFade 0.4s ease forwards; }
+        @keyframes overlayFade { to{ opacity:0; pointer-events:none; } }
+
+        .welcome-card {
+            background:linear-gradient(145deg,rgba(15,23,42,0.95),rgba(30,41,59,0.9));
+            border:1px solid rgba(96,165,250,0.3);
+            border-radius:24px; width:100%; max-width:375px; overflow:hidden;
+            box-shadow:0 25px 80px rgba(37,99,235,0.2),0 0 0 1px rgba(96,165,250,0.08);
+            animation:slideDownSpring 0.65s cubic-bezier(0.22,1.2,0.36,1);
+            position:relative;
+        }
+        @keyframes slideDownSpring {
+            0%  { transform:translateY(-120%) scale(0.9); opacity:0; }
+            60% { transform:translateY(10px) scale(1.01); opacity:1; }
+            80% { transform:translateY(-5px); }
+            100%{ transform:translateY(0) scale(1); opacity:1; }
+        }
+
+        .welcome-banner {
+            padding:28px 24px 22px; text-align:center;
+            background:linear-gradient(160deg,rgba(37,99,235,0.12),rgba(6,182,212,0.08),rgba(139,92,246,0.08));
+            border-bottom:1px solid rgba(96,165,250,0.15); position:relative; overflow:hidden;
+        }
+        .welcome-banner::before {
+            content:''; position:absolute; top:0; left:-100%; width:60%; height:100%;
+            background:linear-gradient(to right,transparent,rgba(96,165,250,0.1),transparent);
+            animation:shine 3s infinite;
+        }
+        @keyframes shine { 100%{ left:200%; } }
+
+        .welcome-icon-wrap {
+            width:70px; height:70px; border-radius:50%;
+            background:linear-gradient(135deg,rgba(37,99,235,0.2),rgba(6,182,212,0.15));
+            border:1px solid rgba(96,165,250,0.35);
+            display:flex; align-items:center; justify-content:center;
+            margin:0 auto 14px; position:relative; z-index:1;
+            box-shadow:0 0 30px rgba(37,99,235,0.25);
+            animation:iconPop 3s ease-in-out infinite;
+        }
+        @keyframes iconPop { 0%,100%{ transform:scale(1) rotate(-3deg); } 50%{ transform:scale(1.08) rotate(3deg); } }
+        .welcome-icon-wrap i { font-size:28px; color:var(--blue-light); }
+
+        .welcome-badge-pill {
+            display:inline-flex; align-items:center; gap:6px;
+            background:rgba(37,99,235,0.15); border:1px solid rgba(96,165,250,0.4);
+            color:var(--cyan-light); font-size:10.5px; font-weight:700; letter-spacing:1.5px;
+            padding:5px 14px; border-radius:20px; margin-bottom:12px; text-transform:uppercase;
+        }
+        .welcome-headline { font-size:17px; font-weight:800; color:#f1f5f9; font-family:'Nunito',sans-serif; line-height:1.45; }
+        .welcome-headline span { color:var(--cyan-light); }
+
+        .welcome-body { padding:20px 24px; }
+        .welcome-desc {
+            font-size:13px; color:#94a3b8; line-height:1.65; margin-bottom:16px; text-align:center;
+            font-family:'Nunito',sans-serif;
+        }
+        .welcome-desc strong { color:#e2e8f0; }
+
+        .welcome-steps { display:flex; flex-direction:column; gap:9px; margin-bottom:18px; }
+        .welcome-step { display:flex; align-items:center; gap:10px; font-size:12.5px; color:#94a3b8; font-family:'Nunito',sans-serif; }
+        .step-num {
+            width:22px; height:22px; border-radius:50%; flex-shrink:0;
+            background:rgba(37,99,235,0.18); border:1px solid rgba(96,165,250,0.5);
+            display:flex; align-items:center; justify-content:center;
+            font-size:11px; font-weight:700; color:var(--blue-light);
+        }
+
+        .link-row {
+            display:flex; margin-bottom:16px;
+            border:1px solid rgba(96,165,250,0.3); border-radius:12px; overflow:hidden;
+            background:rgba(15,23,42,0.6);
+        }
+        .link-input {
+            flex:1; background:transparent; padding:11px 14px;
+            color:#e2e8f0; font-size:12px; border:none; outline:none;
+            font-family:'JetBrains Mono',monospace;
+        }
+        .btn-copy {
+            background:transparent; border:none; border-left:1px solid rgba(96,165,250,0.3);
+            padding:11px 16px; color:var(--blue-light); font-size:11.5px; font-weight:700;
+            cursor:pointer; display:flex; align-items:center; gap:6px; transition:0.2s; white-space:nowrap;
+        }
+        .btn-copy:hover { background:rgba(37,99,235,0.12); color:var(--cyan-light); }
+        .btn-copy.copied { color:var(--green-light); }
+
+        .timer-cnt { font-size:11px; font-weight:800; color:var(--cyan-light); background:rgba(6,182,212,0.12); border:1px solid rgba(6,182,212,0.3); border-radius:20px; padding:2px 9px; margin-left:4px; }
+
+        .welcome-btns { display:flex; gap:10px; }
+        .btn-wclose-min {
+            flex:1; padding:12px; background:transparent;
+            border:1px solid rgba(255,255,255,0.1); border-radius:10px;
+            color:#64748b; font-size:12px; font-weight:600; font-family:'Nunito',sans-serif;
+            cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px; transition:0.25s;
+        }
+        .btn-wclose-min:hover { border-color:rgba(96,165,250,0.4); color:var(--blue-light); }
+        .btn-wclose-main {
+            flex:1; padding:12px; background:linear-gradient(135deg,rgba(37,99,235,0.2),rgba(6,182,212,0.1));
+            border:1px solid rgba(96,165,250,0.45); border-radius:10px;
+            color:var(--blue-light); font-size:12.5px; font-weight:700; font-family:'Nunito',sans-serif;
+            cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px;
+            position:relative; overflow:hidden; transition:0.25s;
+        }
+        .btn-wclose-main:hover { background:rgba(37,99,235,0.25); color:#fff; box-shadow:0 0 20px rgba(37,99,235,0.25); }
+
+        /* ══════════════════════════════════
+           KEY CHECK MODAL (from bottom)
+        ══════════════════════════════════ */
+        .check-overlay {
+            position:fixed; inset:0; background:rgba(2,8,23,0.85);
+            backdrop-filter:blur(18px); z-index:88888;
+            display:flex; justify-content:center; align-items:flex-end;
+            pointer-events:none; opacity:0; transition:opacity 0.35s ease;
+        }
+        .check-overlay.show { opacity:1; pointer-events:all; }
+
+        .check-modal {
+            width:100%; max-width:420px;
+            background:linear-gradient(160deg,rgba(15,23,42,0.98),rgba(30,41,59,0.97));
+            border:1px solid rgba(96,165,250,0.28);
+            border-radius:28px 28px 0 0;
+            padding:32px 28px 48px;
+            position:relative; overflow:hidden;
+            transform:translateY(100%); transition:transform 0.5s cubic-bezier(0.22,1,0.36,1);
+            box-shadow:0 -20px 80px rgba(37,99,235,0.2), 0 0 0 1px rgba(96,165,250,0.08);
+        }
+        .check-overlay.show .check-modal { transform:translateY(0); }
+
+        .check-drag-bar {
+            width:40px; height:4px; border-radius:4px;
+            background:rgba(96,165,250,0.3); margin:0 auto 28px;
+        }
+
+        .check-ring-wrap {
+            width:110px; height:110px; margin:0 auto 22px; position:relative;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .check-ring-outer {
+            position:absolute; inset:0; border-radius:50%;
+            border:2px dashed rgba(96,165,250,0.3);
+            animation:checkSpin 4s linear infinite;
+        }
+        @keyframes checkSpin { 100%{ transform:rotate(360deg); } }
+        .check-ring-outer::before {
+            content:''; position:absolute; top:-5px; left:50%; transform:translateX(-50%);
+            width:10px; height:10px; border-radius:50%;
+            background:var(--blue-light); box-shadow:0 0 12px var(--blue-glow);
+        }
+        .check-ring-mid {
+            position:absolute; inset:12px; border-radius:50%;
+            border:1.5px solid rgba(6,182,212,0.2);
+            animation:checkSpinRev 3s linear infinite;
+        }
+        @keyframes checkSpinRev { 100%{ transform:rotate(-360deg); } }
+        .check-ring-mid::after {
+            content:''; position:absolute; bottom:-4px; left:50%; transform:translateX(-50%);
+            width:7px; height:7px; border-radius:50%;
+            background:var(--cyan); box-shadow:0 0 8px var(--cyan-glow);
+        }
+        .check-icon-center {
+            width:66px; height:66px; border-radius:50%;
+            background:linear-gradient(135deg,rgba(37,99,235,0.2),rgba(6,182,212,0.12));
+            border:1.5px solid rgba(96,165,250,0.35);
+            display:flex; align-items:center; justify-content:center;
+            font-size:26px; z-index:1; position:relative;
+            box-shadow:0 0 30px rgba(37,99,235,0.25),inset 0 0 20px rgba(37,99,235,0.08);
+            animation:checkIconGlow 1.5s ease-in-out infinite;
+        }
+        @keyframes checkIconGlow {
+            0%,100%{ box-shadow:0 0 20px rgba(37,99,235,0.25); }
+            50%{ box-shadow:0 0 40px rgba(37,99,235,0.5),0 0 60px rgba(6,182,212,0.2); }
+        }
+
+        .check-title {
+            text-align:center; font-size:19px; font-weight:800;
+            color:#f1f5f9; font-family:'Nunito',sans-serif; margin-bottom:6px;
+        }
+        .check-sub { text-align:center; font-size:13px; color:#64748b; margin-bottom:26px; font-family:'Nunito',sans-serif; }
+
+        .check-steps { display:flex; flex-direction:column; gap:11px; margin-bottom:26px; }
+        .check-step {
+            display:flex; align-items:center; gap:12px;
+            background:rgba(30,41,59,0.5); border:1px solid rgba(96,165,250,0.08);
+            border-radius:12px; padding:11px 14px;
+            opacity:0.35; transition:all 0.4s ease;
+        }
+        .check-step.done { opacity:1; border-color:rgba(96,165,250,0.2); }
+        .check-step.active { opacity:1; border-color:rgba(96,165,250,0.35); background:rgba(37,99,235,0.1); }
+        .cs-dot {
+            width:32px; height:32px; border-radius:10px; flex-shrink:0;
+            background:rgba(30,41,59,0.8); border:1px solid rgba(96,165,250,0.2);
+            display:flex; align-items:center; justify-content:center;
+            font-size:14px; color:#475569; transition:all 0.4s;
+        }
+        .check-step.done .cs-dot { background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.4); color:var(--green-light); }
+        .check-step.active .cs-dot { background:rgba(37,99,235,0.15); border-color:rgba(96,165,250,0.45); color:var(--blue-light); animation:csDotPulse 0.8s ease-in-out infinite; }
+        @keyframes csDotPulse { 0%,100%{ box-shadow:none; } 50%{ box-shadow:0 0 12px rgba(37,99,235,0.5); } }
+        .cs-text { flex:1; }
+        .cs-label { font-size:13px; font-weight:600; color:#cbd5e1; font-family:'Nunito',sans-serif; }
+        .cs-desc { font-size:11px; color:#475569; margin-top:1px; font-family:'Nunito',sans-serif; }
+        .check-step.done .cs-label { color:#e2e8f0; }
+        .check-step.done .cs-desc { color:#64748b; }
+        .cs-check { font-size:14px; color:var(--green-light); opacity:0; transition:opacity 0.3s; }
+        .check-step.done .cs-check { opacity:1; }
+
+        .check-progress-wrap { margin-bottom:20px; }
+        .check-progress-label { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+        .check-progress-text { font-size:12px; color:#64748b; font-family:'Nunito',sans-serif; }
+        .check-progress-pct { font-size:12px; font-weight:700; color:var(--blue-light); font-family:'JetBrains Mono',monospace; }
+        .check-progress-bar {
+            height:6px; border-radius:6px; background:rgba(30,41,59,0.8);
+            overflow:hidden; border:1px solid rgba(96,165,250,0.1);
+        }
+        .check-progress-fill {
+            height:100%; width:0%; border-radius:6px;
+            background:linear-gradient(90deg,var(--blue),var(--cyan));
+            box-shadow:0 0 10px rgba(37,99,235,0.6);
+            transition:width 0.4s ease; position:relative; overflow:hidden;
+        }
+        .check-progress-fill::after {
+            content:''; position:absolute; top:0; left:-50%; width:50%; height:100%;
+            background:linear-gradient(to right,transparent,rgba(255,255,255,0.35),transparent);
+            animation:progShine 1.2s linear infinite;
+        }
+        @keyframes progShine { 100%{ left:200%; } }
+
+        .check-result {
+            display:none; align-items:center; gap:12px;
+            border-radius:12px; padding:14px 16px;
+        }
+        .check-result.success { display:flex; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); }
+        .check-result.fail { display:flex; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); }
+        .check-result-icon { font-size:22px; }
+        .check-result.success .check-result-icon { color:var(--green-light); }
+        .check-result.fail .check-result-icon { color:#fca5a5; }
+        .check-result-text { font-size:13.5px; font-weight:700; font-family:'Nunito',sans-serif; }
+        .check-result.success .check-result-text { color:#a7f3d0; }
+        .check-result.fail .check-result-text { color:#fca5a5; }
+
+        .check-modal::before {
+            content:''; position:absolute; top:-40px; right:-40px;
+            width:120px; height:120px; border-radius:50%;
+            background:radial-gradient(circle,rgba(37,99,235,0.15) 0%,transparent 70%);
+            pointer-events:none;
+        }
+        .check-modal::after {
+            content:''; position:absolute; bottom:-30px; left:-30px;
+            width:100px; height:100px; border-radius:50%;
+            background:radial-gradient(circle,rgba(6,182,212,0.12) 0%,transparent 70%);
+            pointer-events:none;
+        }
+
+        /* ══════════════════════════════════
+           LOGIN SCREEN
+        ══════════════════════════════════ */
+        .login-box {
+            width:100%; max-width:360px;
+            background:linear-gradient(145deg,rgba(15,23,42,0.85),rgba(30,41,59,0.75));
+            border:1px solid rgba(96,165,250,0.22); border-radius:24px;
+            padding:36px 28px 32px;
+            backdrop-filter:blur(24px);
+            box-shadow:0 25px 80px rgba(37,99,235,0.12),0 0 0 1px rgba(96,165,250,0.06);
+            animation:fadeInUp 0.6s cubic-bezier(0.19,1,0.22,1);
+            position:relative; overflow:hidden;
+        }
+        @keyframes fadeInUp { from{ transform:translateY(50px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+
+        .login-box::before {
+            content:''; position:absolute; top:0; left:0; width:32px; height:32px;
+            border-top:2px solid rgba(96,165,250,0.5); border-left:2px solid rgba(96,165,250,0.5);
+            border-radius:24px 0 0 0;
+        }
+        .login-box::after {
+            content:''; position:absolute; bottom:0; right:0; width:32px; height:32px;
+            border-bottom:2px solid rgba(6,182,212,0.4); border-right:2px solid rgba(6,182,212,0.4);
+            border-radius:0 0 24px 0;
+        }
+        .login-sweep {
+            position:absolute; top:0; left:-100%; width:50%; height:100%;
+            background:linear-gradient(to right,transparent,rgba(96,165,250,0.04),transparent);
+            animation:loginSweep 4s ease-in-out infinite;
+        }
+        @keyframes loginSweep { 0%{ left:-100%; } 100%{ left:200%; } }
+
+        .logo-wrap { display:flex; justify-content:center; margin-bottom:22px; position:relative; }
+        .logo-ring-1 {
+            position:absolute; width:88px; height:88px; border-radius:50%;
+            border:1px solid rgba(96,165,250,0.3); top:50%; left:50%; transform:translate(-50%,-50%);
+            animation:logoRing 2.5s linear infinite;
+        }
+        .logo-ring-2 {
+            position:absolute; width:100px; height:100px; border-radius:50%;
+            border:1px dashed rgba(6,182,212,0.2); top:50%; left:50%; transform:translate(-50%,-50%);
+            animation:logoRingRev 3.5s linear infinite;
+        }
+        @keyframes logoRing { 100%{ transform:translate(-50%,-50%) rotate(360deg); } }
+        @keyframes logoRingRev { 100%{ transform:translate(-50%,-50%) rotate(-360deg); } }
+        .logo-img {
+            width:72px; height:72px; border-radius:50%; object-fit:cover;
+            border:2px solid rgba(96,165,250,0.4);
+            box-shadow:0 0 30px rgba(37,99,235,0.3),0 0 60px rgba(6,182,212,0.1);
+            position:relative; z-index:2;
+        }
+        .logo-badge-chip {
+            position:absolute; bottom:-6px; left:50%; transform:translateX(-50%);
+            background:linear-gradient(135deg,#1d4ed8,#0891b2); color:#fff;
+            font-size:9px; font-weight:800; letter-spacing:1.5px; padding:3px 10px; border-radius:20px;
+            z-index:3; white-space:nowrap; font-family:'Nunito',sans-serif;
+            box-shadow:0 2px 12px rgba(37,99,235,0.5);
+        }
+
+        .login-title { text-align:center; font-size:20px; font-weight:800; font-family:'Nunito',sans-serif; letter-spacing:1px; background:linear-gradient(135deg,var(--blue-light),var(--cyan-light)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:4px; }
+        .login-sub { text-align:center; font-size:11.5px; color:#334155; margin-bottom:22px; letter-spacing:0.5px; font-family:'Nunito',sans-serif; }
+
+        .fb-status-row { display:flex; align-items:center; gap:8px; margin-bottom:20px; background:rgba(30,41,59,0.5); padding:8px 14px; border-radius:10px; border:1px solid rgba(96,165,250,0.1); }
+        .fb-dot { width:7px; height:7px; border-radius:50%; background:rgba(239,68,68,0.7); transition:background 0.4s; animation:fbPulse 1.5s ease-in-out infinite; flex-shrink:0; }
+        .fb-dot.connected { background:rgba(16,185,129,0.9); box-shadow:0 0 8px rgba(16,185,129,0.5); }
+        @keyframes fbPulse { 0%,100%{ opacity:1; } 50%{ opacity:0.5; } }
+        #fb-status-text { font-size:11.5px; color:#475569; font-family:'Nunito',sans-serif; }
+
+        .input-label { font-size:12px; font-weight:600; color:#64748b; margin-bottom:9px; display:flex; align-items:center; gap:7px; font-family:'Nunito',sans-serif; letter-spacing:0.3px; }
+        .key-wrapper {
+            display:flex; align-items:center; gap:0;
+            background:rgba(30,41,59,0.6); border:1.5px solid rgba(96,165,250,0.2);
+            border-radius:14px; overflow:hidden; transition:border-color 0.25s, box-shadow 0.25s;
+        }
+        .key-wrapper:focus-within { border-color:rgba(96,165,250,0.5); box-shadow:0 0 0 3px rgba(37,99,235,0.12), 0 0 20px rgba(37,99,235,0.1); }
+        .key-prefix { padding:0 14px; color:#334155; font-size:16px; }
+        .key-field {
+            flex:1; background:transparent; border:none; outline:none; padding:14px 6px;
+            color:#e2e8f0; font-size:14px; font-family:'JetBrains Mono',monospace;
+            letter-spacing:0.5px;
+        }
+        .key-field::placeholder { color:#334155; font-family:'Nunito',sans-serif; font-size:12.5px; letter-spacing:0; }
+        .key-eye {
+            padding:0 16px; height:50px; background:transparent; border:none;
+            border-left:1px solid rgba(96,165,250,0.15); cursor:pointer;
+            color:#334155; font-size:14px; transition:color 0.2s;
+        }
+        .key-eye:hover,.key-eye.vis { color:var(--blue-light); }
+        .key-glow-bar { height:2px; border-radius:2px; background:transparent; transition:background 0.4s; margin-top:3px; }
+        .key-wrapper:focus-within + .key-glow-bar { background:linear-gradient(to right,var(--blue),var(--cyan)); }
+
+        .key-strength { display:none; align-items:center; gap:8px; margin-top:10px; }
+        .key-strength.vis { display:flex; }
+        .ks-bars { display:flex; gap:4px; }
+        .ks-bar { width:22px; height:4px; border-radius:4px; background:rgba(30,41,59,0.8); border:1px solid rgba(96,165,250,0.1); transition:all 0.3s; }
+        .ks-bar.l1 { background:var(--red); border-color:var(--red); box-shadow:0 0 6px var(--red-glow); }
+        .ks-bar.l2 { background:var(--yellow); border-color:var(--yellow); }
+        .ks-bar.l3 { background:var(--green); border-color:var(--green); box-shadow:0 0 6px var(--green-glow); }
+        .ks-label { font-size:11.5px; font-weight:600; font-family:'Nunito',sans-serif; color:#64748b; }
+
+        .err-msg { display:none; align-items:center; gap:8px; margin-top:11px; padding:9px 14px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:10px; }
+        .err-msg i { color:#fca5a5; font-size:13px; flex-shrink:0; }
+        #err-text { font-size:12.5px; color:#fca5a5; font-family:'Nunito',sans-serif; font-weight:600; }
+
+        .btn-login {
+            width:100%; margin-top:22px; padding:15px;
+            background:linear-gradient(135deg,rgba(37,99,235,0.85),rgba(6,182,212,0.6));
+            border:1.5px solid rgba(96,165,250,0.5); border-radius:14px;
+            color:#fff; font-size:14px; font-weight:800; font-family:'Nunito',sans-serif;
+            cursor:pointer; position:relative; overflow:hidden;
+            display:flex; align-items:center; justify-content:center; gap:10px;
+            transition:all 0.3s; letter-spacing:0.5px;
+            box-shadow:0 8px 32px rgba(37,99,235,0.3);
+        }
+        .btn-login::before {
+            content:''; position:absolute; top:0; left:-80%; width:50%; height:100%;
+            background:linear-gradient(to right,transparent,rgba(255,255,255,0.12),transparent);
+            animation:btnShine 2.5s ease-in-out infinite;
+        }
+        @keyframes btnShine { 0%{ left:-80%; } 100%{ left:200%; } }
+        .btn-login:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 12px 40px rgba(37,99,235,0.4); }
+        .btn-login:active:not(:disabled) { transform:translateY(0); }
+        .btn-login:disabled { opacity:0.7; cursor:not-allowed; }
+        .btn-icon-l { font-size:16px; opacity:0.9; }
+        .btn-icon-r { font-size:12px; opacity:0.7; margin-left:auto; }
+
+        .features-list { width:100%; max-width:360px; margin-top:24px; display:flex; flex-direction:column; gap:8px; }
+        .feat-item { display:flex; align-items:center; gap:10px; font-size:12.5px; color:#475569; font-family:'Nunito',sans-serif; }
+        .feat-check { width:18px; height:18px; border-radius:50%; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .feat-check i { font-size:9px; color:var(--green-light); }
+
+        /* ══════════════════════════════════
+           DASHBOARD
+        ══════════════════════════════════ */
+        .topnav {
+            width:100%; max-width:480px; display:flex; align-items:center; gap:12px;
+            background:rgba(15,23,42,0.75); border:1px solid rgba(96,165,250,0.18);
+            border-radius:20px; padding:10px 16px; margin-bottom:18px;
+            backdrop-filter:blur(20px);
+            box-shadow:0 4px 24px rgba(0,0,0,0.25);
+        }
+        .topnav-logo { width:36px; height:36px; border-radius:10px; object-fit:cover; border:1px solid rgba(96,165,250,0.3); flex-shrink:0; }
+        .topnav-info { flex:1; min-width:0; }
+        .topnav-title { font-size:13px; font-weight:800; font-family:'Nunito',sans-serif; color:#e2e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .topnav-status { display:flex; align-items:center; gap:6px; margin-top:1px; }
+        .dot-online { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green-glow); flex-shrink:0; animation:pulse 1.8s ease-in-out infinite; }
+        @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.5; } }
+        .topnav-tag { font-size:10.5px; color:#475569; font-family:'Nunito',sans-serif; }
+        .ping-chip { display:inline-flex; align-items:center; gap:4px; font-size:10.5px; color:var(--cyan-light); font-family:'JetBrains Mono',monospace; }
+        .topnav-actions { display:flex; align-items:center; gap:8px; }
+        .nav-btn {
+            width:36px; height:36px; border-radius:10px;
+            background:rgba(30,41,59,0.6); border:1px solid rgba(96,165,250,0.15);
+            display:flex; align-items:center; justify-content:center;
+            cursor:pointer; color:#475569; font-size:15px; transition:all 0.25s;
+            position:relative;
+        }
+        .nav-btn:hover { background:rgba(37,99,235,0.15); color:var(--blue-light); border-color:rgba(96,165,250,0.4); }
+        .nav-btn.notif { position:relative; }
+
+        /* ══ NOTIFICATION BADGE ══ */
+        .notif-badge {
+            position:absolute; top:-5px; right:-5px;
+            min-width:18px; height:18px; border-radius:9px;
+            background:var(--red); color:#fff;
+            font-size:10px; font-weight:800; font-family:'Nunito',sans-serif;
+            display:none; align-items:center; justify-content:center;
+            padding:0 4px; border:2px solid #020817;
+            animation:badgePop 0.4s cubic-bezier(0.22,1.2,0.36,1);
+            z-index:1;
+        }
+        .notif-badge.show { display:flex; }
+        @keyframes badgePop {
+            0%{ transform:scale(0); }
+            60%{ transform:scale(1.25); }
+            100%{ transform:scale(1); }
+        }
+        .notif-badge.pulse-red {
+            animation:badgePulseRed 1s ease-in-out infinite;
+        }
+        @keyframes badgePulseRed {
+            0%,100%{ box-shadow:0 0 0 0 rgba(239,68,68,0.7); }
+            50%{ box-shadow:0 0 0 6px rgba(239,68,68,0); }
+        }
+
+        /* ══ NOTIFICATION PANEL ══ */
+        .notif-overlay {
+            position:fixed; inset:0; background:rgba(2,8,23,0.7);
+            backdrop-filter:blur(10px); z-index:88000;
+            display:flex; justify-content:center; align-items:flex-end;
+            opacity:0; pointer-events:none; transition:opacity 0.3s ease;
+        }
+        .notif-overlay.show { opacity:1; pointer-events:all; }
+
+        .notif-panel {
+            width:100%; max-width:480px;
+            background:linear-gradient(160deg,rgba(10,18,38,0.99),rgba(22,34,54,0.99));
+            border:1px solid rgba(96,165,250,0.22);
+            border-radius:28px 28px 0 0;
+            padding:0 0 48px;
+            transform:translateY(100%);
+            transition:transform 0.45s cubic-bezier(0.22,1,0.36,1);
+            max-height:80vh; overflow:hidden;
+            display:flex; flex-direction:column;
+            box-shadow:0 -20px 80px rgba(37,99,235,0.18), 0 0 0 1px rgba(96,165,250,0.06);
+        }
+        .notif-overlay.show .notif-panel { transform:translateY(0); }
+
+        .notif-header {
+            padding:20px 24px 16px;
+            border-bottom:1px solid rgba(96,165,250,0.1);
+            display:flex; align-items:center; gap:12px;
+            background:rgba(15,23,42,0.6);
+        }
+        .notif-drag-bar {
+            width:40px; height:4px; border-radius:4px;
+            background:rgba(96,165,250,0.3);
+            position:absolute; top:12px; left:50%; transform:translateX(-50%);
+        }
+        .notif-title-wrap { flex:1; }
+        .notif-title {
+            font-size:16px; font-weight:800; color:#e2e8f0;
+            font-family:'Nunito',sans-serif; display:flex; align-items:center; gap:8px;
+        }
+        .notif-title i { color:var(--blue-light); font-size:15px; }
+        .notif-count-chip {
+            font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px;
+            background:rgba(239,68,68,0.18); border:1px solid rgba(239,68,68,0.4);
+            color:#fca5a5; font-family:'Nunito',sans-serif;
+        }
+        .notif-sub { font-size:11px; color:#475569; margin-top:2px; font-family:'Nunito',sans-serif; }
+        .btn-notif-close {
+            width:32px; height:32px; border-radius:9px;
+            background:rgba(30,41,59,0.6); border:1px solid rgba(96,165,250,0.15);
+            color:#475569; font-size:13px; cursor:pointer;
+            display:flex; align-items:center; justify-content:center; transition:0.2s;
+        }
+        .btn-notif-close:hover { background:rgba(239,68,68,0.15); color:#fca5a5; border-color:rgba(239,68,68,0.3); }
+        .btn-notif-readall {
+            background:transparent; border:none; cursor:pointer;
+            color:var(--blue-light); font-size:11.5px; font-weight:700;
+            font-family:'Nunito',sans-serif; padding:6px 10px;
+            border-radius:8px; transition:0.2s;
+        }
+        .btn-notif-readall:hover { background:rgba(37,99,235,0.12); }
+
+        .notif-list-wrap {
+            flex:1; overflow-y:auto; padding:16px 16px 8px;
+        }
+        .notif-list-wrap::-webkit-scrollbar { width:4px; }
+        .notif-list-wrap::-webkit-scrollbar-track { background:transparent; }
+        .notif-list-wrap::-webkit-scrollbar-thumb { background:rgba(96,165,250,0.2); border-radius:4px; }
+
+        .notif-empty {
+            text-align:center; padding:40px 20px;
+            color:#334155; font-family:'Nunito',sans-serif;
+        }
+        .notif-empty i { font-size:36px; margin-bottom:12px; display:block; opacity:0.4; }
+        .notif-empty-txt { font-size:14px; font-weight:600; }
+        .notif-empty-sub { font-size:12px; margin-top:4px; opacity:0.6; }
+
+        .notif-item {
+            display:flex; gap:12px; padding:14px; border-radius:16px;
+            border:1px solid rgba(96,165,250,0.1);
+            background:rgba(30,41,59,0.35);
+            margin-bottom:10px; cursor:pointer;
+            transition:all 0.25s; position:relative; overflow:hidden;
+        }
+        .notif-item:hover { background:rgba(37,99,235,0.1); border-color:rgba(96,165,250,0.3); transform:translateX(4px); }
+        .notif-item.unread {
+            background:rgba(37,99,235,0.08);
+            border-color:rgba(96,165,250,0.25);
+        }
+        .notif-item.unread::before {
+            content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+            background:linear-gradient(180deg,var(--blue),var(--cyan));
+            border-radius:3px 0 0 3px;
+        }
+        .notif-item-icon {
+            width:40px; height:40px; border-radius:12px; flex-shrink:0;
+            display:flex; align-items:center; justify-content:center; font-size:17px;
+        }
+        .ni-type-info { background:rgba(37,99,235,0.15); border:1px solid rgba(96,165,250,0.3); color:var(--blue-light); }
+        .ni-type-warn { background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.35); color:var(--yellow); }
+        .ni-type-success { background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); color:var(--green-light); }
+        .ni-type-danger { background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.35); color:#fca5a5; }
+
+        .notif-item-body { flex:1; min-width:0; }
+        .notif-item-title {
+            font-size:13px; font-weight:700; color:#e2e8f0;
+            font-family:'Nunito',sans-serif; line-height:1.4; margin-bottom:3px;
+        }
+        .notif-item.unread .notif-item-title { color:#f1f5f9; }
+        .notif-item-msg {
+            font-size:12px; color:#64748b; font-family:'Nunito',sans-serif; line-height:1.5;
+        }
+        .notif-item-time {
+            font-size:10.5px; color:#334155; margin-top:6px;
+            font-family:'JetBrains Mono',monospace; display:flex; align-items:center; gap:5px;
+        }
+        .notif-unread-dot {
+            width:8px; height:8px; border-radius:50%; background:var(--blue-light);
+            box-shadow:0 0 6px var(--blue-glow); flex-shrink:0;
+            align-self:flex-start; margin-top:4px;
+        }
+        .notif-item:not(.unread) .notif-unread-dot { display:none; }
+
+        /* ══════════════════════════════════
+           STATS ROW
+        ══════════════════════════════════ */
+        .stats-row { width:100%; max-width:480px; display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+        .stat-card {
+            border-radius:16px; padding:14px 12px;
+            border:1px solid rgba(96,165,250,0.12); position:relative; overflow:hidden;
+            background:rgba(15,23,42,0.7); backdrop-filter:blur(16px);
+            cursor:default;
+        }
+        .sc-blue { background:linear-gradient(135deg,rgba(37,99,235,0.12),rgba(30,41,59,0.6)); border-color:rgba(37,99,235,0.25); }
+        .sc-cyan { background:linear-gradient(135deg,rgba(6,182,212,0.1),rgba(30,41,59,0.6)); border-color:rgba(6,182,212,0.2); }
+        .sc-green { background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(30,41,59,0.6)); border-color:rgba(16,185,129,0.2); }
+        .stat-lbl { font-size:10px; color:#475569; font-weight:600; font-family:'Nunito',sans-serif; letter-spacing:0.5px; text-transform:uppercase; margin-bottom:4px; }
+        .stat-val { font-size:16px; font-weight:800; color:#e2e8f0; font-family:'JetBrains Mono',monospace; }
+        .stat-ico { position:absolute; right:10px; bottom:10px; font-size:20px; opacity:0.1; }
+        .stat-card-glow { position:absolute; inset:0; opacity:0; transition:opacity 0.3s; background:radial-gradient(circle at 50% 50%,rgba(37,99,235,0.12) 0%,transparent 70%); }
+        .stat-card:hover .stat-card-glow { opacity:1; }
+
+        /* ══ KEY STRIP ══ */
+        .key-strip {
+            width:100%; max-width:480px; padding:12px 16px;
+            background:rgba(15,23,42,0.6); border:1px solid rgba(96,165,250,0.15);
+            border-radius:14px; margin-bottom:14px;
+            display:flex; align-items:center; gap:12px;
+            font-family:'JetBrains Mono',monospace;
+        }
+        .key-strip i { color:var(--blue-light); font-size:16px; flex-shrink:0; }
+        .key-strip-val { font-size:14px; color:#cbd5e1; letter-spacing:0.5px; }
+        .key-strip-expire { margin-left:auto; }
+
+        /* ══ INFO BANNER ══ */
+        .info-banner {
+            width:100%; max-width:480px; margin-bottom:18px;
+            background:linear-gradient(135deg,rgba(15,23,42,0.8),rgba(30,41,59,0.6));
+            border:1px solid rgba(96,165,250,0.15); border-radius:20px; padding:16px;
+            display:flex; gap:14px; align-items:flex-start;
+            position:relative; overflow:hidden;
+        }
+        .info-banner::before {
+            content:''; position:absolute; top:0; left:-80%; width:40%; height:100%;
+            background:linear-gradient(to right,transparent,rgba(96,165,250,0.05),transparent);
+            animation:bannerShine 4s ease-in-out infinite;
+        }
+        @keyframes bannerShine { 0%{ left:-80%; } 100%{ left:200%; } }
+        .banner-logo { width:46px; height:46px; border-radius:12px; object-fit:cover; border:1px solid rgba(96,165,250,0.3); flex-shrink:0; }
+        .banner-info { flex:1; min-width:0; }
+        .banner-title { font-size:13.5px; font-weight:800; color:#e2e8f0; font-family:'Nunito',sans-serif; margin-bottom:8px; }
+        .banner-rows { display:flex; flex-direction:column; gap:5px; }
+        .banner-row { display:flex; align-items:center; gap:7px; font-size:11.5px; color:#64748b; font-family:'Nunito',sans-serif; }
+        .banner-row i { color:var(--green-light); font-size:10px; flex-shrink:0; }
+
+        /* ══ SECTION LABEL ══ */
+        .sec-label { width:100%; max-width:480px; display:flex; align-items:center; gap:8px; font-size:11.5px; font-weight:700; color:#475569; font-family:'Nunito',sans-serif; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px; }
+        .sec-label i { color:var(--blue-light); font-size:12px; }
+
+        /* ══ QUICK GRID ══ */
+        .quick-grid { width:100%; max-width:480px; display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-bottom:18px; }
+        .qbtn {
+            border-radius:14px; padding:12px 6px; display:flex; flex-direction:column; align-items:center; gap:7px;
+            cursor:pointer; border:1px solid rgba(96,165,250,0.12); background:rgba(15,23,42,0.6);
+            transition:all 0.25s; position:relative; overflow:hidden;
+        }
+        .qbtn:hover { transform:translateY(-3px); box-shadow:0 10px 25px rgba(37,99,235,0.2); }
+        .qbtn:active { transform:translateY(0); }
+        .qb1 { background:linear-gradient(135deg,rgba(37,99,235,0.12),rgba(30,41,59,0.4)); border-color:rgba(37,99,235,0.2); }
+        .qb2 { background:linear-gradient(135deg,rgba(6,182,212,0.1),rgba(30,41,59,0.4)); border-color:rgba(6,182,212,0.18); }
+        .qb3 { background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(30,41,59,0.4)); border-color:rgba(16,185,129,0.18); }
+        .qb4 { background:linear-gradient(135deg,rgba(139,92,246,0.1),rgba(30,41,59,0.4)); border-color:rgba(139,92,246,0.18); }
+        .qbtn-ico { font-size:18px; }
+        .qb1 .qbtn-ico { color:var(--blue-light); }
+        .qb2 .qbtn-ico { color:var(--cyan-light); }
+        .qb3 .qbtn-ico { color:var(--green-light); }
+        .qb4 .qbtn-ico { color:var(--purple-light); }
+        .qbtn-lbl { font-size:10px; font-weight:700; color:#64748b; font-family:'Nunito',sans-serif; text-align:center; }
+
+        /* ══ FEATURE CARDS ══ */
+        .cards-list { width:100%; max-width:480px; display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
+        .feat-row {
+            background:rgba(15,23,42,0.65); border:1px solid rgba(96,165,250,0.1);
+            border-radius:16px; padding:14px 16px; display:flex; align-items:center; gap:14px;
+            transition:all 0.3s; cursor:default; position:relative; overflow:hidden;
+        }
+        .feat-row::before {
+            content:''; position:absolute; inset:0;
+            background:linear-gradient(135deg,rgba(37,99,235,0.06),transparent);
+            opacity:0; transition:opacity 0.3s;
+        }
+        .feat-row.on::before { opacity:1; }
+        .feat-row.on { border-color:rgba(96,165,250,0.35); box-shadow:0 0 20px rgba(37,99,235,0.12); }
+        .row-icon {
+            width:40px; height:40px; border-radius:12px; flex-shrink:0;
+            background:rgba(37,99,235,0.12); border:1px solid rgba(96,165,250,0.2);
+            display:flex; align-items:center; justify-content:center; font-size:17px; color:#60a5fa;
+            transition:all 0.3s;
+        }
+        .feat-row.on .row-icon { background:rgba(37,99,235,0.2); border-color:rgba(96,165,250,0.45); box-shadow:0 0 14px rgba(37,99,235,0.3); }
+        .row-text { flex:1; min-width:0; }
+        .row-lbl { font-size:13px; font-weight:700; color:#cbd5e1; font-family:'Nunito',sans-serif; }
+        .row-desc { font-size:11px; color:#475569; margin-top:2px; font-family:'Nunito',sans-serif; line-height:1.4; }
+        .feat-row.on .row-lbl { color:#e2e8f0; }
+        .row-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+        .status-pill {
+            font-size:10px; font-weight:700; font-family:'JetBrains Mono',monospace;
+            padding:3px 9px; border-radius:8px;
+            background:rgba(30,41,59,0.8); border:1px solid rgba(96,165,250,0.15); color:#475569;
+            transition:all 0.3s;
+        }
+        .feat-row.on .status-pill { background:rgba(37,99,235,0.18); border-color:rgba(96,165,250,0.5); color:var(--blue-light); }
+
+        /* ══ SWITCH ══ */
+        .switch { position:relative; display:inline-block; width:42px; height:24px; flex-shrink:0; }
+        .switch input { opacity:0; width:0; height:0; }
+        .slider {
+            position:absolute; cursor:pointer; inset:0; border-radius:24px;
+            background:rgba(30,41,59,0.8); border:1px solid rgba(96,165,250,0.15);
+            transition:all 0.35s;
+        }
+        .slider::before {
+            content:''; position:absolute; height:16px; width:16px; left:3px; bottom:3px;
+            background:#475569; border-radius:50%; transition:all 0.35s;
+        }
+        input:checked + .slider { background:linear-gradient(135deg,rgba(37,99,235,0.7),rgba(6,182,212,0.5)); border-color:rgba(96,165,250,0.6); box-shadow:0 0 14px rgba(37,99,235,0.4); }
+        input:checked + .slider::before { transform:translateX(18px); background:#fff; }
+
+        /* ══ DIVIDER ══ */
+        .divider { width:100%; max-width:480px; height:1px; background:rgba(96,165,250,0.08); margin:6px 0 18px; }
+
+        /* ══ SLIDER CARD ══ */
+        .slider-card { width:100%; max-width:480px; background:rgba(15,23,42,0.65); border:1px solid rgba(96,165,250,0.12); border-radius:20px; padding:18px; margin-bottom:4px; }
+        .slider-card-title { font-size:13px; font-weight:700; color:#cbd5e1; font-family:'Nunito',sans-serif; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+        .slider-card-title i { color:var(--blue-light); }
+        .sliders-wrap { display:flex; flex-direction:column; gap:14px; }
+        .slider-item { }
+        .slider-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+        .slider-name { font-size:12px; color:#64748b; font-family:'Nunito',sans-serif; }
+        .slider-val { font-size:12px; font-weight:700; color:var(--blue-light); font-family:'JetBrains Mono',monospace; }
+        .range-inp {
+            -webkit-appearance:none; width:100%; height:6px; border-radius:6px; cursor:pointer; outline:none;
+            border:1px solid rgba(96,165,250,0.15);
+        }
+        .range-inp::-webkit-slider-thumb {
+            -webkit-appearance:none; width:18px; height:18px; border-radius:50%;
+            background:#fff; border:2px solid var(--blue); box-shadow:0 0 8px var(--blue-glow); cursor:pointer;
+        }
+
+        /* ══ MODULE CARD ══ */
+        .module-card { width:100%; max-width:480px; background:rgba(15,23,42,0.65); border:1px solid rgba(96,165,250,0.12); border-radius:20px; padding:18px; margin-bottom:18px; }
+        .module-header { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+        .mod-left { display:flex; align-items:center; gap:12px; flex:1; }
+        .mod-icon { width:42px; height:42px; border-radius:12px; background:rgba(37,99,235,0.12); border:1px solid rgba(96,165,250,0.25); display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--blue-light); flex-shrink:0; }
+        .mod-title { font-size:14px; font-weight:700; color:#e2e8f0; font-family:'Nunito',sans-serif; }
+        .mod-sub { font-size:11px; color:#475569; font-family:'Nunito',sans-serif; }
+        .btn-run {
+            padding:9px 18px; border-radius:12px;
+            background:linear-gradient(135deg,rgba(37,99,235,0.7),rgba(6,182,212,0.4));
+            border:1px solid rgba(96,165,250,0.4); color:#fff;
+            font-size:12.5px; font-weight:700; font-family:'Nunito',sans-serif;
+            cursor:pointer; display:flex; align-items:center; gap:8px; transition:all 0.25s;
+            white-space:nowrap;
+        }
+        .btn-run:hover { box-shadow:0 0 20px rgba(37,99,235,0.4); }
+        .btn-run.running { background:linear-gradient(135deg,rgba(239,68,68,0.6),rgba(245,158,11,0.4)); border-color:rgba(239,68,68,0.4); }
+
+        .terminal-box { max-height:0; overflow:hidden; transition:max-height 0.5s ease; border-radius:14px; }
+        .terminal-box.open { max-height:400px; }
+        .terminal-inner {
+            background:rgba(2,8,23,0.95); border:1px solid rgba(37,99,235,0.2);
+            border-radius:14px; padding:14px; font-family:'JetBrains Mono',monospace;
+            font-size:11px; color:#94a3b8; max-height:400px; overflow-y:auto;
+        }
+        .terminal-inner::-webkit-scrollbar { width:4px; }
+        .terminal-inner::-webkit-scrollbar-thumb { background:rgba(96,165,250,0.2); border-radius:4px; }
+        .term-line { padding:1.5px 0; line-height:1.55; }
+        .term-prog-wrap { margin:4px 0; }
+        .term-prog-bar { height:4px; border-radius:4px; background:rgba(30,41,59,0.8); overflow:hidden; margin-top:3px; }
+        .term-prog-fill { height:100%; width:0%; border-radius:4px; background:linear-gradient(90deg,var(--blue),var(--cyan)); transition:width 0.4s ease; }
+        .gun-row { display:flex; flex-wrap:wrap; gap:5px; margin:4px 0; }
+        .gun-chip { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:8px; font-size:10.5px; font-weight:600; }
+        .gc-blue  { background:rgba(37,99,235,0.18); border:1px solid rgba(37,99,235,0.3); color:var(--blue-light); }
+        .gc-grn   { background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:var(--green-light); }
+        .gc-cyan  { background:rgba(6,182,212,0.15); border:1px solid rgba(6,182,212,0.3); color:var(--cyan-light); }
+        .gc-ylw   { background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3); color:var(--yellow); }
+        .gc-org   { background:rgba(249,115,22,0.12); border:1px solid rgba(249,115,22,0.3); color:var(--orange); }
+        .gc-prp   { background:rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.3); color:var(--purple-light); }
+        .gc-red   { background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; }
+        .gc-pnk   { background:rgba(236,72,153,0.12); border:1px solid rgba(236,72,153,0.3); color:var(--pink); }
+        .tc-pfx   { color:#475569; }
+        .tc-blue  { color:var(--blue-light); }
+        .tc-cyan  { color:var(--cyan-light); }
+        .tc-grn   { color:var(--green-light); }
+        .tc-ylw   { color:var(--yellow); }
+        .tc-org   { color:var(--orange); }
+        .tc-prp   { color:var(--purple-light); }
+        .tc-red   { color:#fca5a5; }
+        .tc-wht   { color:#cbd5e1; }
+        .tc-dim   { color:#334155; }
+        .blink-cur { display:inline-block; width:6px; height:12px; background:var(--blue-light); animation:blinkCur 0.8s steps(2) infinite; vertical-align:middle; margin-left:2px; }
+        @keyframes blinkCur { 0%{ opacity:1; } 100%{ opacity:0; } }
+
+        /* ══ LOGOUT BTN ══ */
+        .logout-btn {
+            margin-top:10px; padding:12px 28px;
+            background:transparent; border:1px solid rgba(239,68,68,0.3); border-radius:30px;
+            color:var(--red); font-size:13px; font-weight:700; font-family:'Nunito',sans-serif;
+            cursor:pointer; transition:all 0.25s; display:flex; align-items:center; gap:8px;
+        }
+        .logout-btn:hover { background:rgba(239,68,68,0.08); border-color:rgba(239,68,68,0.5); }
+        .version-tag { margin-top:14px; font-size:11px; color:#334155; font-family:'Nunito',sans-serif; letter-spacing:1px; }
+
+        /* ══ MODAL OVERLAY ══ */
+        .modal-overlay { position:fixed; inset:0; background:rgba(2,8,23,0.85); backdrop-filter:blur(12px); z-index:77777; display:none; justify-content:center; align-items:center; }
+        .modal-overlay.show { display:flex; }
+        .modal-box {
+            width:220px; background:linear-gradient(145deg,rgba(15,23,42,0.95),rgba(30,41,59,0.9));
+            border:1px solid rgba(96,165,250,0.3); border-radius:24px; padding:28px 20px 24px;
+            display:flex; flex-direction:column; align-items:center; gap:12px;
+            box-shadow:0 25px 80px rgba(37,99,235,0.25);
+            animation:modalPop 0.4s cubic-bezier(0.19,1,0.22,1);
+        }
+        .modal-box.deact { border-color:rgba(239,68,68,0.3); }
+        @keyframes modalPop { from{ transform:scale(0.85); opacity:0; } to{ transform:scale(1); opacity:1; } }
+        .orbit-ring {
+            width:70px; height:70px; border-radius:50%; border:2px dashed rgba(96,165,250,0.3);
+            display:flex; align-items:center; justify-content:center;
+            animation:spin 2s linear infinite;
+        }
+        .modal-box.deact .orbit-ring { border-color:rgba(239,68,68,0.3); animation:spin 1.5s linear infinite reverse; }
+        .orbit-center { width:50px; height:50px; border-radius:50%; background:rgba(37,99,235,0.15); border:1px solid rgba(96,165,250,0.35); display:flex; align-items:center; justify-content:center; font-size:20px; color:var(--blue-light); animation:counterSpin 2s linear infinite; }
+        .modal-box.deact .orbit-center { background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.35); color:#fca5a5; animation:counterSpin 1.5s linear infinite reverse; }
+        @keyframes counterSpin { 100%{ transform:rotate(-360deg); } }
+        .modal-title { font-size:15px; font-weight:800; color:#f1f5f9; font-family:'Nunito',sans-serif; text-align:center; }
+        .modal-sub { font-size:12px; color:#64748b; text-align:center; font-family:'Nunito',sans-serif; margin-top:-4px; }
+        .step-list { display:flex; flex-direction:column; gap:6px; width:100%; }
+        .step-item { display:flex; align-items:center; gap:8px; font-size:12px; color:#475569; font-family:'Nunito',sans-serif; opacity:0.4; transition:opacity 0.3s; }
+        .step-item.done { opacity:1; color:#cbd5e1; }
+        .step-dot { width:6px; height:6px; border-radius:50%; background:#334155; flex-shrink:0; transition:background 0.3s; }
+        .step-item.done .step-dot { background:var(--blue-light); box-shadow:0 0 6px var(--blue-glow); }
+    </style>
+</head>
+<body>
+
+<div class="hex-bg" id="hex-bg"></div>
+<div class="scan-overlay"></div>
+<canvas id="particles-canvas"></canvas>
+<div class="ripple-overlay" id="ripple-overlay"></div>
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<!-- SPLASH -->
+<div id="splash-screen">
+    <div class="splash-ring">
+        <img src="https://sf-static.upanhlaylink.com/img/image_20260313c8e5ff3531d34404575f229fe201d9ac.jpg"
+             onerror="this.src='https://ui-avatars.com/api/?name=VIP&background=2563eb&color=fff&size=200&bold=true'" alt="Logo">
+    </div>
+    <div class="splash-title">AIMLOCK SUPER V3</div>
+    <div class="splash-sub">VIP PRO · FIREBASE · SECURE</div>
+    <div class="splash-spinner"></div>
+</div>
+
+<!-- BLOCKED OVERLAY -->
+<div class="blocked-overlay" id="blocked-overlay">
+    <i class="fa-solid fa-ban blocked-icon"></i>
+    <div class="blocked-title">Truy Cập Bị Từ Chối</div>
+    <div class="blocked-msg" id="blocked-msg">Key của bạn đã hết hạn hoặc bị vô hiệu hóa.<br>Vui lòng liên hệ admin để gia hạn.</div>
+    <div class="blocked-zalo"><i class="fa-brands fa-whatsapp"></i> Zalo: 0379435045</div>
+    <button class="btn-blocked-logout" onclick="doLogout()">
+        <i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất
+    </button>
+</div>
+
+<!-- WELCOME MODAL -->
+<div class="welcome-overlay" id="welcome-overlay">
+    <div class="welcome-card">
+        <div class="welcome-banner">
+            <div class="welcome-icon-wrap">
+                <i class="fa-solid fa-gift"></i>
+            </div>
+            <div class="welcome-badge-pill" id="wm-badge">
+                <i class="fa-solid fa-star"></i> <span id="wm-badge-text">FREE KEY HÀNG NGÀY</span>
+            </div>
+            <div class="welcome-headline" id="wm-headline">Lấy Key VIP <span>Miễn Phí</span><br>ngay hôm nay!</div>
+        </div>
+        <div class="welcome-body">
+            <p class="welcome-desc" id="wm-desc">
+                Sao chép <strong>Link bên dưới để lấy key miễn phí ngay nào!</strong><br>
+                Dán vào ô nhập key rồi ấn <strong>Đăng Nhập</strong>.<br>
+                Key lỗi? Vượt lại link để lấy key mới 🕊️
+            </p>
+            <div class="welcome-steps">
+                <div class="welcome-step"><div class="step-num">1</div>Nhấn COPY để sao chép link lấy key</div>
+                <div class="welcome-step"><div class="step-num">2</div>Mua Đồ Chơi VIP — Zalo: <strong>0379435045</strong></div>
+                <div class="welcome-step"><div class="step-num">3</div>Dán key vào ô nhập key và ấn Đăng Nhập</div>
+                <div class="welcome-step"><div class="step-num">4</div>Cảm ơn bạn đã tin dùng! 💙</div>
+            </div>
+            <div class="link-row">
+                <input class="link-input" id="key-link-input" type="text" value="Đang tải link..." readonly>
+                <button class="btn-copy" id="btn-copy-link" onclick="copyLink()">
+                    <i class="fa-solid fa-copy" id="copy-icon"></i>
+                    <span id="copy-label">COPY</span>
+                </button>
+            </div>
+            <div class="welcome-btns">
+                <button class="btn-wclose-min" onclick="closeWelcome(true)">
+                    <i class="fa-regular fa-clock"></i>
+                    <span id="wm-countdown-text">3 phút</span>
+                </button>
+                <button class="btn-wclose-main" onclick="closeWelcome(false)">
+                    <i class="fa-solid fa-xmark"></i> Đóng Ngay
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KEY CHECK MODAL -->
+<div class="check-overlay" id="check-overlay">
+    <div class="check-modal">
+        <div class="check-drag-bar"></div>
+        <div class="check-ring-wrap">
+            <div class="check-ring-outer"></div>
+            <div class="check-ring-mid"></div>
+            <div class="check-icon-center" id="check-icon">
+                <i class="fa-solid fa-shield-halved" style="color:#60a5fa;"></i>
+            </div>
+        </div>
+        <div class="check-title" id="check-title">Đang Xác Minh Key</div>
+        <div class="check-sub" id="check-sub">Vui lòng đợi trong giây lát...</div>
+        <div class="check-steps" id="check-steps">
+            <div class="check-step" id="cstep-1">
+                <div class="cs-dot"><i class="fa-solid fa-server"></i></div>
+                <div class="cs-text">
+                    <div class="cs-label">Kết nối máy chủ</div>
+                    <div class="cs-desc">Đang thiết lập kênh bảo mật...</div>
+                </div>
+                <i class="fa-solid fa-check cs-check"></i>
+            </div>
+            <div class="check-step" id="cstep-2">
+                <div class="cs-dot"><i class="fa-solid fa-key"></i></div>
+                <div class="cs-text">
+                    <div class="cs-label">Xác thực Key</div>
+                    <div class="cs-desc">Kiểm tra tính hợp lệ của key...</div>
+                </div>
+                <i class="fa-solid fa-check cs-check"></i>
+            </div>
+            <div class="check-step" id="cstep-3">
+                <div class="cs-dot"><i class="fa-solid fa-fingerprint"></i></div>
+                <div class="cs-text">
+                    <div class="cs-label">Xác minh thiết bị</div>
+                    <div class="cs-desc">Liên kết thiết bị với tài khoản...</div>
+                </div>
+                <i class="fa-solid fa-check cs-check"></i>
+            </div>
+            <div class="check-step" id="cstep-4">
+                <div class="cs-dot"><i class="fa-solid fa-rocket"></i></div>
+                <div class="cs-text">
+                    <div class="cs-label">Khởi động hệ thống</div>
+                    <div class="cs-desc">Nạp module và cấu hình VIP...</div>
+                </div>
+                <i class="fa-solid fa-check cs-check"></i>
+            </div>
+        </div>
+        <div class="check-progress-wrap">
+            <div class="check-progress-label">
+                <span class="check-progress-text">Tiến trình xác minh</span>
+                <span class="check-progress-pct" id="check-pct">0%</span>
+            </div>
+            <div class="check-progress-bar">
+                <div class="check-progress-fill" id="check-fill"></div>
+            </div>
+        </div>
+        <div class="check-result" id="check-result-ok" style="display:none;">
+            <i class="fa-solid fa-circle-check check-result-icon"></i>
+            <div class="check-result-text">Key hợp lệ! Đang vào App Super...</div>
+        </div>
+        <div class="check-result" id="check-result-fail" style="display:none;">
+            <i class="fa-solid fa-circle-xmark check-result-icon"></i>
+            <div class="check-result-text" id="check-fail-text">Key không hợp lệ! Vui lòng thử lại.</div>
+        </div>
+    </div>
+</div>
+
+<!-- NOTIFICATION PANEL -->
+<div class="notif-overlay" id="notif-overlay" onclick="closeNotifPanel(event)">
+    <div class="notif-panel" id="notif-panel">
+        <div style="position:relative;">
+            <div class="notif-drag-bar"></div>
+        </div>
+        <div class="notif-header">
+            <div class="notif-title-wrap">
+                <div class="notif-title">
+                    <i class="fa-solid fa-bell"></i>
+                    Thông Báo
+                    <span class="notif-count-chip" id="notif-count-chip" style="display:none;"></span>
+                </div>
+                <div class="notif-sub" id="notif-sub-text">Không có thông báo mới</div>
+            </div>
+            <button class="btn-notif-readall" id="btn-read-all" onclick="markAllRead()" style="display:none;">Đọc tất cả</button>
+            <button class="btn-notif-close" onclick="closeNotifPanelBtn()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="notif-list-wrap" id="notif-list-wrap">
+            <div class="notif-empty" id="notif-empty">
+                <i class="fa-regular fa-bell-slash"></i>
+                <div class="notif-empty-txt">Chưa có thông báo</div>
+                <div class="notif-empty-sub">Thông báo mới sẽ xuất hiện ở đây</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div class="screen active" id="login-screen">
+    <div class="login-box">
+        <div class="login-sweep"></div>
+        <div class="logo-wrap">
+            <div class="logo-ring-1"></div>
+            <div class="logo-ring-2"></div>
+            <img class="logo-img"
+                 src="https://sf-static.upanhlaylink.com/img/image_20260313c8e5ff3531d34404575f229fe201d9ac.jpg"
+                 alt="Logo VIP"
+                 onerror="this.src='https://ui-avatars.com/api/?name=VIP&background=2563eb&color=fff&size=200&bold=true'">
+            <div class="logo-badge-chip">VIP PRO</div>
+        </div>
+        <div class="login-title">AIMLOCK SUPER V3</div>
+        <div class="login-sub">Version 3.0 — Nhập key để tiếp tục</div>
+        <div class="fb-status-row">
+            <div class="fb-dot" id="fb-dot"></div>
+            <span id="fb-status-text">Đang kết nối Firebase...</span>
+        </div>
+        <div>
+            <div class="input-label">
+                <i class="fa-solid fa-key"></i> Key đăng nhập
+            </div>
+            <div class="key-wrapper" id="key-wrapper">
+                <div class="key-prefix">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <input
+                    type="password"
+                    class="key-field"
+                    id="key-input"
+                    placeholder="Nhập Key VIP của bạn..."
+                    autocomplete="off"
+                    oninput="onKeyInput(this)"
+                    onkeydown="if(event.key==='Enter') doLogin()"
+                >
+                <button class="key-eye" id="eye-btn" onclick="toggleEye()" title="Hiện/Ẩn Key">
+                    <i class="fa-solid fa-eye" id="eye-icon"></i>
+                </button>
+            </div>
+            <div class="key-glow-bar"></div>
+            <div class="key-strength" id="key-strength">
+                <div class="ks-bars">
+                    <div class="ks-bar" id="sb1"></div>
+                    <div class="ks-bar" id="sb2"></div>
+                    <div class="ks-bar" id="sb3"></div>
+                </div>
+                <div class="ks-label" id="ks-label">Nhập key...</div>
+            </div>
+            <div class="err-msg" id="err-msg">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span id="err-text">Key không hợp lệ! Vui lòng thử lại.</span>
+            </div>
+        </div>
+        <button class="btn-login" id="btn-login" onclick="doLogin()">
+            <i class="fa-solid fa-fingerprint btn-icon-l"></i>
+            <span id="btn-login-text">Đăng Nhập</span>
+            <i class="fa-solid fa-chevron-right btn-icon-r"></i>
+        </button>
+    </div>
+    <div class="features-list">
+        <div class="feat-item"><div class="feat-check"><i class="fa-solid fa-check"></i></div>Bypass Anti-Cheat chuyên nghiệp — ẩn hoàn toàn</div>
+        <div class="feat-item"><div class="feat-check"><i class="fa-solid fa-check"></i></div>Tối ưu FPS tối đa &amp; giảm Ping xuống mức thấp nhất</div>
+        <div class="feat-item"><div class="feat-check"><i class="fa-solid fa-check"></i></div>Cải thiện kéo tâm full đỏ — chính xác tuyệt đối</div>
+        <div class="feat-item"><div class="feat-check"><i class="fa-solid fa-check"></i></div>Cập nhật liên tục, hỗ trợ mọi thiết bị Android</div>
+        <div class="feat-item"><div class="feat-check"><i class="fa-solid fa-check"></i></div>Liên hệ Zalo: <strong style="color:var(--cyan-light)">0379435045</strong></div>
+    </div>
+</div>
+
+<!-- DASHBOARD SCREEN -->
+<div class="screen" id="dashboard">
+    <!-- Top Nav -->
+    <div class="topnav">
+        <img class="topnav-logo"
+             src="https://sf-static.upanhlaylink.com/img/image_20260313c8e5ff3531d34404575f229fe201d9ac.jpg"
+             onerror="this.src='https://ui-avatars.com/api/?name=VIP&background=2563eb&color=fff&size=200'"
+             alt="Logo">
+        <div class="topnav-info">
+            <div class="topnav-title">AIMLOCK SUPER V3</div>
+            <div class="topnav-status">
+                <span class="dot-online"></span>
+                <span class="topnav-tag">Hoạt động &nbsp;·&nbsp;</span>
+                <span class="ping-chip"><span class="dot-online"></span> <span id="ping-val">12ms</span></span>
+            </div>
+        </div>
+        <div class="topnav-actions">
+            <div class="nav-btn notif" onclick="openNotifPanel()" title="Thông báo" id="notif-btn">
+                <i class="fa-solid fa-bell"></i>
+                <span class="notif-badge" id="notif-badge">0</span>
+            </div>
+            <div class="nav-btn" onclick="doLogout()" title="Đăng xuất">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-card sc-blue">
+            <div class="stat-lbl">Phiên</div>
+            <div class="stat-val" id="session-timer">00:00</div>
+            <i class="fa-solid fa-clock stat-ico"></i>
+            <div class="stat-card-glow"></div>
+        </div>
+        <div class="stat-card sc-cyan">
+            <div class="stat-lbl">Module</div>
+            <div class="stat-val" id="active-count">0 / 8</div>
+            <i class="fa-solid fa-sliders stat-ico"></i>
+            <div class="stat-card-glow"></div>
+        </div>
+        <div class="stat-card sc-green">
+            <div class="stat-lbl">KEY</div>
+            <div class="stat-val">VIP</div>
+            <i class="fa-solid fa-crown stat-ico"></i>
+            <div class="stat-card-glow"></div>
+        </div>
+    </div>
+
+    <!-- Key Info Strip -->
+    <div class="key-strip" id="key-strip">
+        <i class="fa-solid fa-shield-keyhole"></i>
+        <div>
+            <div style="font-size:10px;color:#334155;margin-bottom:2px;letter-spacing:1px;text-transform:uppercase;">Key đang dùng</div>
+            <div class="key-strip-val" id="key-strip-val">••••••••</div>
+        </div>
+        <div class="key-strip-expire" id="key-strip-expire"></div>
+    </div>
+
+    <!-- Info Banner -->
+    <div class="info-banner">
+        <img class="banner-logo"
+             src="https://sf-static.upanhlaylink.com/img/image_20260313c8e5ff3531d34404575f229fe201d9ac.jpg"
+             onerror="this.src='https://ui-avatars.com/api/?name=VIP&background=2563eb&color=fff&size=200'"
+             alt="Logo">
+        <div class="banner-info">
+            <div class="banner-title">AIMLOCK SUPER V3</div>
+            <div class="banner-rows">
+                <div class="banner-row"><i class="fa-solid fa-check"></i>Trạng thái: <strong style="color:var(--green-light);margin-left:3px">Hoạt động</strong></div>
+                <div class="banner-row"><i class="fa-solid fa-check" id="banner-expiry-icon"></i><span id="banner-expiry-text">Key hợp lệ · Vĩnh viễn · Anti-Ban</span></div>
+                <div class="banner-row"><i class="fa-solid fa-check"></i>Server: Online · Mã hóa đầu cuối</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="sec-label"><i class="fa-solid fa-bolt"></i>Thao Tác Nhanh</div>
+    <div class="quick-grid">
+        <div class="qbtn qb1" onclick="quickAction('all-on')">
+            <span class="qbtn-ico"><i class="fa-solid fa-power-off"></i></span>
+            <span class="qbtn-lbl">Bật Tất Cả</span>
+        </div>
+        <div class="qbtn qb2" onclick="quickAction('refresh')">
+            <span class="qbtn-ico"><i class="fa-solid fa-rotate"></i></span>
+            <span class="qbtn-lbl">Làm Mới</span>
+        </div>
+        <div class="qbtn qb3" onclick="quickAction('optimize')">
+            <span class="qbtn-ico"><i class="fa-solid fa-gauge-high"></i></span>
+            <span class="qbtn-lbl">Tối Ưu</span>
+        </div>
+        <div class="qbtn qb4" onclick="quickAction('settings')">
+            <span class="qbtn-ico"><i class="fa-solid fa-gear"></i></span>
+            <span class="qbtn-lbl">Cài Đặt</span>
+        </div>
+    </div>
+
+    <!-- Feature Cards -->
+    <div class="sec-label"><i class="fa-solid fa-sliders"></i>FUNCTION HOME</div>
+    <div class="cards-list">
+        <div class="feat-row" id="card-1">
+            <div class="row-icon"><i class="fa-solid fa-crosshairs"></i></div>
+            <div class="row-text">
+                <div class="row-lbl">AIMLOCK SUPER 2.1.TSC</div>
+                <div class="row-desc">Hỗ Trợ Kéo Tâm Full Đỏ Dễ Dàng</div>
+            </div>
+            <div class="row-right">
+                <div class="status-pill" id="pill-1">OFF</div>
+                <label class="switch"><input type="checkbox" onchange="toggleCard(this,'card-1','AIMLOCK SUPER 2.1.TSC','fa-crosshairs')"><span class="slider"></span></label>
+            </div>
+        </div>
+        <div class="feat-row" id="card-2">
+            <div class="row-icon"><i class="fa-solid fa-bullseye"></i></div>
+            <div class="row-text">
+                <div class="row-lbl">AIM LEGHT NER</div>
+                <div class="row-desc">Cảm Biến Súng Nhẹ Nhàng Khi Vuốt Tâm</div>
+            </div>
+            <div class="row-right">
+                <div class="status-pill" id="pill-2">OFF</div>
+                <label class="switch"><input type="checkbox" onchange="toggleCard(this,'card-2','AIM LEGHT NER','fa-bullseye')"><span class="slider"></span></label>
+            </div>
+        </div>
+        <div class="feat-row" id="card-3">
+            <div class="row-icon"><i class="fa-solid fa-rocket"></i></div>
+            <div class="row-text">
+                <div class="row-lbl">BOOST SUPER</div>
+                <div class="row-desc">Tăng Tốc Thiết Bị Cảm Biến Nhanh &amp; Mượt Mà Hơn</div>
+            </div>
+            <div class="row-right">
+                <div class="status-pill" id="pill-3">OFF</div>
+                <label class="switch"><input type="checkbox" onchange="toggleCard(this,'card-3','BOOST SUPER','fa-rocket')"><span class="slider"></span></label>
+            </div>
+        </div>
+        <div class="feat-row" id="card-4">
+            <div class="row-icon"><i class="fa-solid fa-mobile-screen"></i></div>
+            <div class="row-text">
+                <div class="row-lbl">TOUCH SCREEN</div>
+                <div class="row-desc">Tốc độ trượt màn hình nhanh hơn 3x</div>
+            </div>
+            <div class="row-right">
+                <div class="status-pill" id="pill-4">OFF</div>
+                <label class="switch"><input type="checkbox" onchange="toggleCard(this,'card-4','TOUCH SCREEN','fa-mobile-screen')"><span class="slider"></span></label>
+            </div>
+        </div>
+        <div class="feat-row" id="card-5">
+            <div class="row-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="row-text">
+                <div class="row-lbl">ANTI CHEAT</div>
+                <div class="row-desc">Bảo vệ tài khoản · Ẩn khỏi server</div>
+            </div>
+            <div class="row-right">
+                <div class="status-pill" id="pill-5">OFF</div>
+                <label class="switch"><input type="checkbox" onchange="toggleCard(this,'card-5','ANTI CHEAT','fa-shield-halved')"><span class="slider"></span></label>
+            </div>
+        </div>
+        <div class="feat-row" id="card-6">
+            <div class="row-icon"><i class="fa-solid fa-wifi"></i></div>
+            <div class="row-text">
+                <div class="row-lbl">OPTIMIZER PIG</div>
+                <div class="row-desc">Giảm ping tối đa · Ổn định đường truyền</div>
+            </div>
+            <div class="row-right">
+                <div class="status-pill" id="pill-6">OFF</div>
+                <label class="switch"><input type="checkbox" onchange="toggleCard(this,'card-6','OPTIMIZER PIG','fa-wifi')"><span class="slider"></span></label>
+            </div>
+        </div>
+        <div class="feat-row" id="card-7">
+            <div class="row-icon"><i class="fa-solid fa-laptop-code"></i></div>
+            <div class="row-text">
+                <div class="row-lbl">SENSITIVITY PHONE</div>
+                <div class="row-desc">Cải Thiện Thiết Bị Nhạy Hơn Khi Cảm Biến</div>
+            </div>
+            <div class="row-right">
+                <div class="status-pill" id="pill-7">OFF</div>
+                <label class="switch"><input type="checkbox" onchange="toggleCard(this,'card-7','SENSITIVITY PHONE','fa-laptop-code')"><span class="slider"></span></label>
+            </div>
+        </div>
+        <div class="feat-row" id="card-8">
+            <div class="row-icon"><i class="fa-solid fa-gauge-high"></i></div>
+            <div class="row-text">
+                <div class="row-lbl">FPS BOOST ULTRA</div>
+                <div class="row-desc">Tăng FPS tối đa · Xóa lag hoàn toàn</div>
+            </div>
+            <div class="row-right">
+                <div class="status-pill" id="pill-8">OFF</div>
+                <label class="switch"><input type="checkbox" onchange="toggleCard(this,'card-8','FPS Booster Ultra','fa-gauge-high')"><span class="slider"></span></label>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Sliders -->
+    <div class="sec-label"><i class="fa-solid fa-sliders"></i>Điều Chỉnh Thông Số</div>
+    <div class="slider-card">
+        <div class="slider-card-title"><i class="fa-solid fa-crosshairs"></i>Cấu Hình Aimlock</div>
+        <div class="sliders-wrap">
+            <div class="slider-item">
+                <div class="slider-hdr">
+                    <span class="slider-name">Độ nhạy kéo tâm</span>
+                    <span class="slider-val" id="sv1">50%</span>
+                </div>
+                <input type="range" class="range-inp ri-blue" min="0" max="100" value="50" oninput="updateRange(this,'sv1','%','blue')">
+            </div>
+            <div class="slider-item">
+                <div class="slider-hdr">
+                    <span class="slider-name">Tốc độ Aim Lock</span>
+                    <span class="slider-val" id="sv2">60%</span>
+                </div>
+                <input type="range" class="range-inp ri-green" min="0" max="100" value="60" oninput="updateRange(this,'sv2','%','green')">
+            </div>
+            <div class="slider-item">
+                <div class="slider-hdr">
+                    <span class="slider-name">Phạm vi khóa mục tiêu</span>
+                    <span class="slider-val" id="sv3">75px</span>
+                </div>
+                <input type="range" class="range-inp ri-purple" min="10" max="200" value="75" oninput="updateRange(this,'sv3','px','purple')">
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Module Runner -->
+    <div class="sec-label"><i class="fa-solid fa-terminal"></i>Module Runner</div>
+    <div class="module-card">
+        <div class="module-header">
+            <div class="mod-left">
+                <div class="mod-icon"><i class="fa-solid fa-terminal"></i></div>
+                <div>
+                    <div class="mod-title">AimlockSuper Engine</div>
+                    <div class="mod-sub">v3.0.0 · Build 2026 · VIP</div>
+                </div>
+            </div>
+            <button class="btn-run" id="btn-run" onclick="runModule()">
+                <i class="fa-solid fa-play" id="run-icon"></i>
+                <span id="run-label">Chạy Module</span>
+            </button>
+        </div>
+        <div class="terminal-box" id="terminal-box">
+            <div class="terminal-inner" id="terminal-output"></div>
+        </div>
+    </div>
+
+    <button class="logout-btn" onclick="doLogout()">
+        <i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất
+    </button>
+    <div class="version-tag">ZALO : 0379435045</div>
+</div>
+
+<!-- ACTIVATION MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal-box" id="modal-box">
+        <div class="orbit-ring">
+            <div class="orbit-center" id="modal-icon"></div>
+        </div>
+        <div class="modal-title" id="modal-title">Đang kích hoạt...</div>
+        <div class="modal-sub" id="modal-sub"></div>
+        <div class="step-list">
+            <div class="step-item" id="ms1"><div class="step-dot"></div>Khởi tạo module...</div>
+            <div class="step-item" id="ms2"><div class="step-dot"></div>Nạp cấu hình...</div>
+            <div class="step-item" id="ms3"><div class="step-dot"></div>Bypass bảo vệ...</div>
+            <div class="step-item" id="ms4"><div class="step-dot"></div>Áp dụng hoàn tất!</div>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════
+   FIREBASE CONFIG
+════════════════════════════════════════════════ */
+const firebaseConfig = {
+    apiKey: "AIzaSyAb6aAwvxmEtSKN4751w8fDr0OvBfhWv5s",
+    authDomain: "aimlocksuperv3.firebaseapp.com",
+    databaseURL: "https://aimlocksuperv3-default-rtdb.firebaseio.com",
+    projectId: "aimlocksuperv3",
+    storageBucket: "aimlocksuperv3.firebasestorage.app",
+    messagingSenderId: "998304202992",
+    appId: "1:998304202992:web:6466c0d1ab2d984211c235"
+};
+
+/* ══ KHỞI TẠO FIREBASE ══ */
+let db = null;
+let firebaseReady = false;
+
+try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    firebaseReady = true;
+} catch(e) {
+    console.warn('Firebase init error:', e);
+}
+
+/* ════════════════════════════════════════════════
+   DEVICE ID
+════════════════════════════════════════════════ */
+function getDeviceId() {
+    let did = localStorage.getItem('_vs3_device_id');
+    if (!did) {
+        const arr = new Uint8Array(16);
+        crypto.getRandomValues(arr);
+        did = Array.from(arr).map(b => b.toString(16).padStart(2,'0')).join('');
+        localStorage.setItem('_vs3_device_id', did);
+    }
+    return did;
+}
+const DEVICE_ID = getDeviceId();
+
+/* ════════════════════════════════════════════════
+   STORAGE KEYS
+════════════════════════════════════════════════ */
+const LS_KEY      = 'vipsuper3_saved_key';
+const LS_KEYDATA  = 'vipsuper3_key_data';
+const LS_HIDE_KEY = 'vipsuper3_hide_until';
+const LS_NOTIF_READ = 'vipsuper3_notif_read';
+
+/* ════════════════════════════════════════════════
+   FIREBASE STATUS
+════════════════════════════════════════════════ */
+function setFbStatus(ok) {
+    const dot = document.getElementById('fb-dot');
+    const txt = document.getElementById('fb-status-text');
+    if (!dot) return;
+    if (ok) {
+        dot.classList.add('connected');
+        txt.textContent = 'Server: Đã kết nối';
+    } else {
+        dot.classList.remove('connected');
+        txt.textContent = 'Server: Chưa kết nối';
+    }
+}
+
+if (firebaseReady && db) {
+    db.ref('.info/connected').on('value', snap => {
+        setFbStatus(snap.val() === true);
+    });
+} else {
+    setFbStatus(false);
+}
+
+/* ════════════════════════════════════════════════
+   LOAD WELCOME MODAL LINK TỪ FIREBASE — REAL-TIME
+════════════════════════════════════════════════ */
+function loadModalLink() {
+    if (!firebaseReady || !db) return;
+    db.ref('settings/modalLink').on('value', snap => {
+        const data = snap.val() || {};
+        const inp = document.getElementById('key-link-input');
+        if (inp && data.url) inp.value = data.url;
+        const badge = document.getElementById('wm-badge-text');
+        if (badge && data.badge) badge.textContent = data.badge;
+        const hl = document.getElementById('wm-headline');
+        if (hl && data.title) hl.innerHTML = data.title;
+        const desc = document.getElementById('wm-desc');
+        if (desc && data.desc) desc.innerHTML = data.desc;
+    });
+}
+loadModalLink();
+
+/* ════════════════════════════════════════════════
+   NOTIFICATIONS — LOAD & DISPLAY
+════════════════════════════════════════════════ */
+let allNotifications = [];
+let readNotifIds = JSON.parse(localStorage.getItem(LS_NOTIF_READ) || '[]');
+
+function loadNotifications() {
+    if (!firebaseReady || !db) return;
+    db.ref('notifications').orderByChild('createdAt').on('value', snap => {
+        const data = snap.val() || {};
+        allNotifications = Object.entries(data)
+            .map(([id, v]) => ({ id, ...v }))
+            .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        updateNotifBadge();
+    });
+}
+loadNotifications();
+
+function getUnreadCount() {
+    return allNotifications.filter(n => !readNotifIds.includes(n.id)).length;
+}
+
+function updateNotifBadge() {
+    const badge = document.getElementById('notif-badge');
+    const count = getUnreadCount();
+    if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.classList.add('show', 'pulse-red');
+    } else {
+        badge.classList.remove('show', 'pulse-red');
+    }
+}
+
+function openNotifPanel() {
+    const overlay = document.getElementById('notif-overlay');
+    overlay.classList.add('show');
+    renderNotifList();
+    showRipple();
+}
+
+function closeNotifPanel(e) {
+    if (e && e.target !== document.getElementById('notif-overlay')) return;
+    document.getElementById('notif-overlay').classList.remove('show');
+}
+
+function closeNotifPanelBtn() {
+    document.getElementById('notif-overlay').classList.remove('show');
+}
+
+function markAllRead() {
+    allNotifications.forEach(n => {
+        if (!readNotifIds.includes(n.id)) readNotifIds.push(n.id);
+    });
+    localStorage.setItem(LS_NOTIF_READ, JSON.stringify(readNotifIds));
+    updateNotifBadge();
+    renderNotifList();
+    showToast('Đã đọc tất cả thông báo', 'fa-check-circle', '#10b981');
+}
+
+function markOneRead(id) {
+    if (!readNotifIds.includes(id)) {
+        readNotifIds.push(id);
+        localStorage.setItem(LS_NOTIF_READ, JSON.stringify(readNotifIds));
+        updateNotifBadge();
+        renderNotifList();
+    }
+}
+
+function getNotifIconClass(type) {
+    const map = {
+        info:    { cls:'ni-type-info',    icon:'fa-circle-info' },
+        warn:    { cls:'ni-type-warn',    icon:'fa-triangle-exclamation' },
+        success: { cls:'ni-type-success', icon:'fa-circle-check' },
+        danger:  { cls:'ni-type-danger',  icon:'fa-circle-xmark' },
+    };
+    return map[type] || map.info;
+}
+
+function formatNotifTime(ts) {
+    if (!ts) return '';
+    const diff = Date.now() - ts;
+    if (diff < 60000) return 'Vừa xong';
+    if (diff < 3600000) return Math.floor(diff/60000) + ' phút trước';
+    if (diff < 86400000) return Math.floor(diff/3600000) + ' giờ trước';
+    const d = new Date(ts);
+    return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+}
+
+function renderNotifList() {
+    const wrap = document.getElementById('notif-list-wrap');
+    const empty = document.getElementById('notif-empty');
+    const countChip = document.getElementById('notif-count-chip');
+    const subText = document.getElementById('notif-sub-text');
+    const btnReadAll = document.getElementById('btn-read-all');
+    const unread = getUnreadCount();
+
+    if (allNotifications.length === 0) {
+        empty.style.display = '';
+        countChip.style.display = 'none';
+        subText.textContent = 'Không có thông báo mới';
+        btnReadAll.style.display = 'none';
+        wrap.innerHTML = '';
+        wrap.appendChild(empty);
+        return;
+    }
+
+    empty.style.display = 'none';
+    countChip.style.display = unread > 0 ? '' : 'none';
+    countChip.textContent = unread + ' mới';
+    subText.textContent = unread > 0 ? `${unread} thông báo chưa đọc` : 'Tất cả đã đọc';
+    btnReadAll.style.display = unread > 0 ? '' : 'none';
+
+    const items = allNotifications.map(n => {
+        const isUnread = !readNotifIds.includes(n.id);
+        const ic = getNotifIconClass(n.type || 'info');
+        return `
+        <div class="notif-item ${isUnread ? 'unread' : ''}" onclick="markOneRead('${n.id}')">
+            <div class="notif-item-icon ${ic.cls}">
+                <i class="fa-solid ${ic.icon}"></i>
+            </div>
+            <div class="notif-item-body">
+                <div class="notif-item-title">${n.title || 'Thông báo'}</div>
+                <div class="notif-item-msg">${n.message || ''}</div>
+                <div class="notif-item-time">
+                    <i class="fa-regular fa-clock"></i>
+                    ${formatNotifTime(n.createdAt)}
+                </div>
+            </div>
+            <div class="notif-unread-dot"></div>
+        </div>`;
+    }).join('');
+
+    wrap.innerHTML = items;
+}
+
+/* ════════════════════════════════════════════════
+   PARTICLES
+════════════════════════════════════════════════ */
+(function(){
+    const c = document.getElementById('particles-canvas');
+    const ctx = c.getContext('2d');
+    let W, H, pts = [];
+    function resize(){ W = c.width = innerWidth; H = c.height = innerHeight; }
+    resize(); addEventListener('resize', resize);
+    const COLS = [
+        [37,99,235], [6,182,212], [139,92,246], [16,185,129], [236,72,153]
+    ];
+    function mkPt(){
+        const col = COLS[Math.floor(Math.random() * COLS.length)];
+        return { x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.6+0.3, dx:(Math.random()-.5)*.4, dy:(Math.random()-.5)*.4, a:Math.random()*.45+.08, col };
+    }
+    for(let i=0;i<90;i++) pts.push(mkPt());
+    function draw(){
+        ctx.clearRect(0,0,W,H);
+        pts.forEach(p=>{
+            ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+            ctx.fillStyle=`rgba(${p.col[0]},${p.col[1]},${p.col[2]},${p.a})`; ctx.fill();
+            p.x+=p.dx; p.y+=p.dy;
+            if(p.x<0||p.x>W||p.y<0||p.y>H) Object.assign(p,mkPt());
+        });
+        requestAnimationFrame(draw);
+    }
+    draw();
+})();
+
+/* ════════════════════════════════════════════════
+   FLOATING HEXAGONS
+════════════════════════════════════════════════ */
+(function(){
+    const bg = document.getElementById('hex-bg');
+    for(let i=0;i<14;i++){
+        const h = document.createElement('div');
+        h.className = 'hex';
+        h.style.cssText = `left:${Math.random()*100}%;animation-duration:${Math.random()*22+18}s;animation-delay:${Math.random()*-30}s;transform:scale(${Math.random()*.8+.4})`;
+        bg.appendChild(h);
+    }
+})();
+
+/* ════════════════════════════════════════════════
+   PING RANDOMIZER
+════════════════════════════════════════════════ */
+setInterval(()=>{
+    const el = document.getElementById('ping-val');
+    if(el) el.textContent = Math.floor(Math.random()*16+7)+'ms';
+}, 3500);
+
+/* ════════════════════════════════════════════════
+   SESSION TIMER
+════════════════════════════════════════════════ */
+let sessionStart = null, sessionTid = null;
+function startSessionTimer(){
+    sessionStart = Date.now();
+    sessionTid = setInterval(()=>{
+        const s = Math.floor((Date.now()-sessionStart)/1000);
+        const el = document.getElementById('session-timer');
+        if(el) el.textContent = String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+    },1000);
+}
+
+/* ════════════════════════════════════════════════
+   ACTIVE COUNT
+════════════════════════════════════════════════ */
+const TOTAL = 8;
+function updateCount(){
+    let n = 0;
+    for(let i=1;i<=TOTAL;i++){ const c=document.getElementById('card-'+i); if(c && c.classList.contains('on')) n++; }
+    const el = document.getElementById('active-count');
+    if(el) el.textContent = n+' / '+TOTAL;
+}
+
+/* ════════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════════ */
+function showToast(msg, icon='fa-circle-check', color='#60a5fa'){
+    const w = document.getElementById('toast-wrap');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = `<i class="fa-solid ${icon}" style="color:${color}"></i>${msg}`;
+    w.appendChild(t);
+    setTimeout(()=>{ if(t.parentElement) t.remove(); }, 3200);
+}
+
+/* ════════════════════════════════════════════════
+   RIPPLE
+════════════════════════════════════════════════ */
+function showRipple(){
+    const ov = document.getElementById('ripple-overlay');
+    ov.classList.add('show');
+    setTimeout(()=> ov.classList.remove('show'), 950);
+}
+
+/* ════════════════════════════════════════════════
+   WELCOME MODAL — COUNTDOWN + HIDE LOGIC
+════════════════════════════════════════════════ */
+let wmCountdown = 180;
+let wmTimerInterval = null;
+
+function startWMCountdown() {
+    wmCountdown = 180;
+    clearInterval(wmTimerInterval);
+    const el = document.getElementById('wm-countdown-text');
+    wmTimerInterval = setInterval(() => {
+        wmCountdown--;
+        if (el) {
+            const m = Math.floor(wmCountdown / 60);
+            const s = wmCountdown % 60;
+            el.textContent = m > 0 ? `${m}:${String(s).padStart(2,'0')}` : `${s}s`;
+        }
+        if (wmCountdown <= 0) {
+            clearInterval(wmTimerInterval);
+            closeWelcome(false);
+        }
+    }, 1000);
+}
+
+(function(){
+    const h = localStorage.getItem(LS_HIDE_KEY);
+    if(h && Date.now() < parseInt(h)) {
+        const ov = document.getElementById('welcome-overlay');
+        if (ov) ov.style.display = 'none';
+        return;
+    }
+    startWMCountdown();
+})();
+
+function closeWelcome(forMin){
+    clearInterval(wmTimerInterval);
+    if(forMin){
+        localStorage.setItem(LS_HIDE_KEY, Date.now()+3*60*1000);
+        showToast('Đã đóng trong 3 phút','fa-clock','#94a3b8');
+    }
+    const ov = document.getElementById('welcome-overlay');
+    ov.classList.add('hiding');
+    setTimeout(()=>{ ov.style.display='none'; ov.classList.remove('hiding'); }, 420);
+}
+
+function copyLink(){
+    const inp = document.getElementById('key-link-input');
+    navigator.clipboard.writeText(inp.value).catch(()=>{ inp.select(); document.execCommand('copy'); });
+    const btn = document.getElementById('btn-copy-link');
+    const ic  = document.getElementById('copy-icon');
+    const lb  = document.getElementById('copy-label');
+    btn.classList.add('copied');
+    ic.className = 'fa-solid fa-check'; lb.textContent = 'ĐÃ COPY';
+    showToast('Đã sao chép link!','fa-copy','#6ee7b7');
+    setTimeout(()=>{ btn.classList.remove('copied'); ic.className='fa-solid fa-copy'; lb.textContent='COPY'; }, 2600);
+}
+
+/* ════════════════════════════════════════════════
+   EYE TOGGLE
+════════════════════════════════════════════════ */
+let eyeVis = false;
+function toggleEye(){
+    const inp = document.getElementById('key-input');
+    const ic  = document.getElementById('eye-icon');
+    const btn = document.getElementById('eye-btn');
+    eyeVis = !eyeVis;
+    inp.type = eyeVis ? 'text' : 'password';
+    ic.className = eyeVis ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+    btn.classList.toggle('vis', eyeVis);
+}
+
+/* ════════════════════════════════════════════════
+   KEY STRENGTH INDICATOR
+════════════════════════════════════════════════ */
+function onKeyInput(inp){
+    const v = inp.value;
+    const ks = document.getElementById('key-strength');
+    const b1=document.getElementById('sb1'), b2=document.getElementById('sb2'), b3=document.getElementById('sb3');
+    const lbl=document.getElementById('ks-label');
+    if(!v.length){ ks.classList.remove('vis'); b1.className=b2.className=b3.className='ks-bar'; return; }
+    ks.classList.add('vis');
+    if(v.length<6){
+        b1.className='ks-bar l1'; b2.className='ks-bar'; b3.className='ks-bar';
+        lbl.textContent='Quá ngắn'; lbl.style.color='#ef4444';
+    } else if(v.length<15){
+        b1.className='ks-bar l2'; b2.className='ks-bar l2'; b3.className='ks-bar';
+        lbl.textContent='Có thể là key'; lbl.style.color='#f59e0b';
+    } else {
+        b1.className='ks-bar l3'; b2.className='ks-bar l3'; b3.className='ks-bar l3';
+        lbl.textContent='✓ Key hợp lệ'; lbl.style.color='#6ee7b7';
+    }
+}
+
+/* ════════════════════════════════════════════════
+   HELPER — Firebase path safe
+════════════════════════════════════════════════ */
+function keyToPath(k) {
+    return k.replace(/[.#$\[\]/]/g, '_');
+}
+
+/* ════════════════════════════════════════════════
+   FORMAT DATE / TIME LEFT
+════════════════════════════════════════════════ */
+function formatDate(ts) {
+    if (!ts) return 'Vĩnh viễn';
+    const d = new Date(ts);
+    return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+}
+
+function timeLeft(ts) {
+    if (!ts) return null;
+    const diff = ts - Date.now();
+    if (diff <= 0) return '⛔ Đã hết hạn';
+    const days  = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const mins  = Math.floor((diff % 3600000) / 60000);
+    if (days > 0)  return `Còn ${days}d ${hours}h`;
+    if (hours > 0) return `Còn ${hours}h ${mins}m`;
+    return `Còn ${mins} phút`;
+}
+
+/* ════════════════════════════════════════════════
+   CẬP NHẬT DASHBOARD
+════════════════════════════════════════════════ */
+function updateDashboardUI(keyVal, keyData) {
+    const expiresAt = keyData.expiresAt || null;
+
+    const stripVal = document.getElementById('key-strip-val');
+    const stripExp = document.getElementById('key-strip-expire');
+    if (stripVal) {
+        const display = keyVal.length > 16
+            ? keyVal.substring(0,6) + '••••' + keyVal.slice(-4)
+            : keyVal;
+        stripVal.textContent = display;
+    }
+    if (stripExp) {
+        if (!expiresAt) {
+            stripExp.innerHTML = '<span style="color:var(--green-light);font-size:11px;"><i class="fa-solid fa-infinity"></i> Vĩnh viễn</span>';
+        } else {
+            const tl = timeLeft(expiresAt);
+            const color = expiresAt - Date.now() < 86400000*3 ? '#f59e0b' : '#67e8f9';
+            stripExp.innerHTML = `<span style="color:${color};font-size:11px;">${tl}</span>`;
+        }
+    }
+
+    const bannerExpText = document.getElementById('banner-expiry-text');
+    const bannerExpIcon = document.getElementById('banner-expiry-icon');
+    if (!expiresAt) {
+        if (bannerExpText) bannerExpText.textContent = 'Key hợp lệ · Vĩnh viễn · Anti-Ban';
+        if (bannerExpIcon) { bannerExpIcon.className='fa-solid fa-check'; bannerExpIcon.style.color=''; }
+    } else {
+        const tl = timeLeft(expiresAt);
+        if (bannerExpText) bannerExpText.textContent = `Key hợp lệ · ${tl}`;
+        if (bannerExpIcon) {
+            if ((expiresAt - Date.now()) < 86400000*3) {
+                bannerExpIcon.className='fa-solid fa-clock'; bannerExpIcon.style.color='#f59e0b';
+            } else {
+                bannerExpIcon.className='fa-solid fa-check'; bannerExpIcon.style.color='';
+            }
+        }
+    }
+
+    if (keyData.note) {
+        showToast(`Ghi chú: ${keyData.note}`, 'fa-note-sticky', '#f59e0b');
+    }
+}
+
+/* ════════════════════════════════════════════════
+   BLOCKED OVERLAY
+════════════════════════════════════════════════ */
+function showBlockedOverlay(msg) {
+    const ov  = document.getElementById('blocked-overlay');
+    const txt = document.getElementById('blocked-msg');
+    if (txt) txt.innerHTML = msg || 'Key của bạn đã hết hạn hoặc bị vô hiệu hóa.<br>Vui lòng liên hệ admin để gia hạn.';
+    ov.classList.add('show');
+}
+
+/* ════════════════════════════════════════════════
+   GIÁM SÁT KEY REAL-TIME
+════════════════════════════════════════════════ */
+let keyWatcherRef = null;
+
+function startKeyWatcher(keyVal) {
+    if (!firebaseReady || !db) return;
+    stopKeyWatcher();
+    const path = keyToPath(keyVal);
+    keyWatcherRef = db.ref('keys/' + path);
+    keyWatcherRef.on('value', snap => {
+        if (!snap.exists()) {
+            stopKeyWatcher();
+            localStorage.removeItem(LS_KEY);
+            localStorage.removeItem(LS_KEYDATA);
+            showBlockedOverlay('Key đã bị xóa khỏi hệ thống!');
+            return;
+        }
+        const data = snap.val();
+        if (data.active === false) {
+            stopKeyWatcher();
+            showBlockedOverlay('Key của bạn đã bị vô hiệu hóa bởi admin!');
+            return;
+        }
+        if (data.expiresAt && Date.now() > data.expiresAt) {
+            stopKeyWatcher();
+            showBlockedOverlay(`Key đã hết hạn lúc ${formatDate(data.expiresAt)}`);
+        }
+    });
+}
+
+function stopKeyWatcher() {
+    if (keyWatcherRef) {
+        keyWatcherRef.off('value');
+        keyWatcherRef = null;
+    }
+}
+
+/* ════════════════════════════════════════════════
+   XÁC THỰC KEY TRÊN FIREBASE
+════════════════════════════════════════════════ */
+async function verifyKeyFirebase(keyVal) {
+    if (!firebaseReady || !db) {
+        throw new Error('Firebase chưa kết nối. Kiểm tra lại cấu hình!');
+    }
+    const path   = keyToPath(keyVal);
+    const snap   = await db.ref('keys/' + path).once('value');
+    if (!snap.exists()) throw new Error('Key không tồn tại!');
+
+    const data = snap.val();
+    if (data.active === false) throw new Error('Key đã bị vô hiệu hóa!');
+    if (data.expiresAt && Date.now() > data.expiresAt) throw new Error('Key đã hết hạn!');
+
+    const maxDevices = data.maxDevices || 1;
+    const devices    = data.devices || {};
+    const devIds     = Object.keys(devices);
+    const already    = devIds.includes(DEVICE_ID);
+
+    if (!already && devIds.length >= maxDevices) {
+        throw new Error(`Key đã đăng ký tối đa ${maxDevices} thiết bị!`);
+    }
+
+    const now = Date.now();
+    const devData = {
+        lastLogin  : now,
+        userAgent  : navigator.userAgent.substring(0, 200),
+        firstLogin : already ? (devices[DEVICE_ID].firstLogin || now) : now
+    };
+    await db.ref('keys/' + path + '/devices/' + DEVICE_ID).set(devData);
+
+    return data;
+}
+
+/* ════════════════════════════════════════════════
+   KEY CHECK MODAL — Animation
+════════════════════════════════════════════════ */
+let checkTids = [];
+function clearCheckTids(){ checkTids.forEach(t=>clearTimeout(t)); checkTids=[]; }
+function ctid(fn,ms){ const id=setTimeout(fn,ms); checkTids.push(id); }
+
+function showCheckModal(isValid, onSuccess, failMsg){
+    const ov    = document.getElementById('check-overlay');
+    const steps = [1,2,3,4].map(i=>document.getElementById('cstep-'+i));
+    const fill  = document.getElementById('check-fill');
+    const pct   = document.getElementById('check-pct');
+    const title = document.getElementById('check-title');
+    const sub   = document.getElementById('check-sub');
+    const icon  = document.getElementById('check-icon');
+    const resOk   = document.getElementById('check-result-ok');
+    const resFail = document.getElementById('check-result-fail');
+    const failTxt = document.getElementById('check-fail-text');
+
+    steps.forEach(s=>{ s.classList.remove('done','active'); });
+    fill.style.width = '0%'; pct.textContent = '0%';
+    resOk.style.display = 'none'; resFail.style.display = 'none';
+    title.textContent = 'Đang Xác Minh Key';
+    sub.textContent   = 'Vui lòng đợi trong giây lát...';
+    icon.innerHTML    = '<i class="fa-solid fa-shield-halved" style="color:#60a5fa;"></i>';
+    if (failTxt && failMsg) failTxt.textContent = failMsg;
+
+    ov.classList.add('show');
+    clearCheckTids();
+
+    const totalMs    = isValid ? 5800 : 4200;
+    const stepTimes  = isValid ? [400, 1400, 2600, 4000] : [400, 1400, 2600, 3400];
+    const pctTarget  = isValid ? [20,50,80,100] : [25,55,80,100];
+
+    ctid(()=>{ steps[0].classList.add('active'); }, 200);
+
+    stepTimes.forEach((t,i)=>{
+        ctid(()=>{
+            steps[i].classList.remove('active');
+            steps[i].classList.add('done');
+            fill.style.width = pctTarget[i]+'%';
+            pct.textContent  = pctTarget[i]+'%';
+            if(i < 3) ctid(()=>{ steps[i+1].classList.add('active'); }, 200);
+        }, t);
+    });
+
+    ctid(()=>{
+        if(isValid){
+            title.textContent = '✓ Xác Minh Thành Công!';
+            sub.textContent   = 'Key hợp lệ — Đang vào Dashboard...';
+            icon.innerHTML    = '<i class="fa-solid fa-circle-check" style="color:#6ee7b7;font-size:30px;"></i>';
+            resOk.style.display = 'flex';
+            showToast('Đăng nhập thành công!','fa-shield-halved','#60a5fa');
+            ctid(()=>{
+                ov.classList.remove('show');
+                document.getElementById('login-screen').classList.remove('active');
+                document.getElementById('dashboard').classList.add('active');
+                startSessionTimer();
+                if (onSuccess) onSuccess();
+            }, 1400);
+        } else {
+            title.textContent = '✗ Xác Minh Thất Bại';
+            sub.textContent   = 'Key không hợp lệ — Vui lòng thử lại';
+            icon.innerHTML    = '<i class="fa-solid fa-circle-xmark" style="color:#fca5a5;font-size:30px;"></i>';
+            resFail.style.display = 'flex';
+            showToast(failMsg || 'Key sai! Copy key từ link và thử lại','fa-circle-xmark','#ef4444');
+            ctid(()=>{ ov.classList.remove('show'); }, 2200);
+        }
+    }, totalMs);
+}
+
+/* ════════════════════════════════════════════════
+   LOGIN
+════════════════════════════════════════════════ */
+async function doLogin(){
+    const val     = document.getElementById('key-input').value.trim();
+    const err     = document.getElementById('err-msg');
+    const errText = document.getElementById('err-text');
+    const wrapper = document.getElementById('key-wrapper');
+    const btn     = document.getElementById('btn-login');
+    const btnTxt  = document.getElementById('btn-login-text');
+
+    err.style.display = 'none';
+
+    if(!val){
+        err.style.display = 'flex';
+        errText.textContent = 'Vui lòng nhập key!';
+        wrapper.style.borderColor = 'rgba(239,68,68,0.5)';
+        setTimeout(()=> wrapper.style.borderColor='', 1000);
+        return;
+    }
+
+    btn.disabled = true;
+    btnTxt.textContent = 'Đang xác thực...';
+
+    try {
+        let keyData;
+        if (firebaseReady && db) {
+            keyData = await verifyKeyFirebase(val);
+        } else {
+            throw new Error('Firebase chưa kết nối. Kiểm tra lại mạng!');
+        }
+
+        localStorage.setItem(LS_KEY, val);
+        localStorage.setItem(LS_KEYDATA, JSON.stringify(keyData));
+
+        const wmo = document.getElementById('welcome-overlay');
+        if (wmo && wmo.style.display !== 'none') closeWelcome(false);
+
+        showCheckModal(true, ()=>{
+            updateDashboardUI(val, keyData);
+            startKeyWatcher(val);
+        });
+    } catch(e) {
+        const msg = e.message || 'Lỗi không xác định!';
+        showCheckModal(false, null, msg);
+        err.style.display = 'flex';
+        errText.textContent = msg;
+    } finally {
+        btn.disabled = false;
+        btnTxt.textContent = 'Đăng Nhập';
+    }
+}
+
+/* ════════════════════════════════════════════════
+   AUTO LOGIN
+════════════════════════════════════════════════ */
+async function checkAutoLogin() {
+    const savedKey = localStorage.getItem(LS_KEY);
+    if (!savedKey) { hideSplash(); return; }
+
+    try {
+        let keyData;
+        if (firebaseReady && db) {
+            keyData = await verifyKeyFirebase(savedKey);
+            localStorage.setItem(LS_KEYDATA, JSON.stringify(keyData));
+        } else {
+            const cached = localStorage.getItem(LS_KEYDATA);
+            if (cached) {
+                keyData = JSON.parse(cached);
+                if (keyData.expiresAt && Date.now() > keyData.expiresAt) {
+                    throw new Error('Key đã hết hạn!');
+                }
+            } else {
+                throw new Error('Không thể xác thực offline!');
+            }
+        }
+
+        hideSplash();
+        updateDashboardUI(savedKey, keyData);
+        document.getElementById('login-screen').classList.remove('active');
+        document.getElementById('dashboard').classList.add('active');
+        startSessionTimer();
+        startKeyWatcher(savedKey);
+
+        const ov = document.getElementById('welcome-overlay');
+        if (ov && ov.style.display !== 'none') closeWelcome(false);
+
+    } catch(e) {
+        localStorage.removeItem(LS_KEY);
+        localStorage.removeItem(LS_KEYDATA);
+        hideSplash();
+        if (e.message && !e.message.includes('kết nối') && !e.message.includes('Firebase')) {
+            showToast(e.message, 'fa-circle-xmark', '#ef4444');
+        }
+    }
+}
+
+function hideSplash() {
+    const s = document.getElementById('splash-screen');
+    if(s) s.classList.add('hidden');
+}
+
+/* ════════════════════════════════════════════════
+   LOGOUT
+════════════════════════════════════════════════ */
+function doLogout(){
+    localStorage.removeItem(LS_KEY);
+    localStorage.removeItem(LS_KEYDATA);
+    stopKeyWatcher();
+    if(sessionTid) clearInterval(sessionTid);
+    document.getElementById('blocked-overlay').classList.remove('show');
+    showToast('Đã đăng xuất!','fa-right-from-bracket','#f97316');
+    showRipple();
+    setTimeout(()=>{
+        document.getElementById('dashboard').classList.remove('active');
+        document.getElementById('login-screen').classList.add('active');
+        document.getElementById('key-input').value='';
+        document.getElementById('key-strength').classList.remove('vis');
+        const st = document.getElementById('session-timer');
+        if(st) st.textContent='00:00';
+        for(let i=1;i<=TOTAL;i++){
+            const c=document.getElementById('card-'+i), p=document.getElementById('pill-'+i);
+            if(c){ c.classList.remove('on'); const cb=c.querySelector('input[type=checkbox]'); if(cb) cb.checked=false; }
+            if(p) p.textContent='OFF';
+        }
+        updateCount();
+        stopModule();
+    }, 420);
+}
+
+/* ════════════════════════════════════════════════
+   QUICK ACTIONS
+════════════════════════════════════════════════ */
+function quickAction(type){
+    showRipple();
+    if(type==='all-on'){
+        for(let i=1;i<=TOTAL;i++){
+            const c=document.getElementById('card-'+i), p=document.getElementById('pill-'+i);
+            const cb=c.querySelector('input[type=checkbox]');
+            c.classList.add('on'); p.textContent='ON'; if(cb) cb.checked=true;
+        }
+        updateCount();
+        showToast('Đã bật tất cả module!','fa-power-off','#60a5fa');
+    } else if(type==='refresh'){
+        showToast('Đã làm mới cấu hình!','fa-rotate','#67e8f9');
+    } else if(type==='optimize'){
+        showToast('Đang tối ưu hệ thống...','fa-gauge-high','#6ee7b7');
+    } else {
+        showToast('Cài đặt đang cập nhật...','fa-gear','#c4b5fd');
+    }
+}
+
+/* ════════════════════════════════════════════════
+   CARD TOGGLE + MODAL
+════════════════════════════════════════════════ */
+let mTid = null;
+function toggleCard(cb, cardId, name, iconClass){
+    const card = document.getElementById(cardId);
+    const pill = document.getElementById(cardId.replace('card-','pill-'));
+    showRipple();
+    if(cb.checked){
+        showActModal(name, iconClass, ()=>{
+            card.classList.add('on'); pill.textContent='ON'; updateCount();
+            showToast(name+' đã kích hoạt!','fa-circle-check','#60a5fa');
+        });
+    } else {
+        showDeactModal(name, iconClass, ()=>{
+            card.classList.remove('on'); pill.textContent='OFF'; updateCount();
+            showToast(name+' đã tắt','fa-circle-xmark','#64748b');
+        });
+    }
+}
+
+function getSteps(){ return [1,2,3,4].map(i=>document.getElementById('ms'+i)); }
+
+function showActModal(name, iconClass, done){
+    const ov=document.getElementById('modal-overlay'), box=document.getElementById('modal-box');
+    const steps=getSteps();
+    box.classList.remove('deact');
+    document.getElementById('modal-icon').innerHTML=`<i class="fa-solid ${iconClass}"></i>`;
+    document.getElementById('modal-title').textContent='Đang kích hoạt...';
+    document.getElementById('modal-sub').textContent=name;
+    steps.forEach(s=>s.classList.remove('done'));
+    ov.classList.add('show');
+    const D=380;
+    steps.forEach((s,i)=>setTimeout(()=>s.classList.add('done'),D*(i+1)));
+    clearTimeout(mTid);
+    mTid=setTimeout(()=>{
+        document.getElementById('modal-title').textContent='✓ Kích hoạt thành công!';
+        setTimeout(()=>{ ov.classList.remove('show'); done(); },650);
+    },D*steps.length+420);
+}
+
+function showDeactModal(name, iconClass, done){
+    const ov=document.getElementById('modal-overlay'), box=document.getElementById('modal-box');
+    const steps=getSteps();
+    box.classList.add('deact');
+    document.getElementById('modal-icon').innerHTML=`<i class="fa-solid ${iconClass}"></i>`;
+    document.getElementById('modal-title').textContent='Đang tắt...';
+    document.getElementById('modal-sub').textContent=name;
+    steps.forEach(s=>s.classList.remove('done'));
+    const labels=['Dừng module...','Xóa cấu hình...','Khôi phục hệ thống...','Hoàn tất!'];
+    steps.forEach((s,i)=>{ s.childNodes[1].textContent=' '+labels[i]; });
+    ov.classList.add('show');
+    const D=320;
+    steps.forEach((s,i)=>setTimeout(()=>s.classList.add('done'),D*(i+1)));
+    clearTimeout(mTid);
+    mTid=setTimeout(()=>{
+        document.getElementById('modal-title').textContent='✓ Đã tắt thành công!';
+        setTimeout(()=>{
+            ov.classList.remove('show');
+            const orig=['Khởi tạo module...','Nạp cấu hình...','Bypass bảo vệ...','Áp dụng hoàn tất!'];
+            steps.forEach((s,i)=>{ s.childNodes[1].textContent=' '+orig[i]; });
+            done();
+        },500);
+    },D*steps.length+380);
+}
+
+/* ════════════════════════════════════════════════
+   SLIDERS
+════════════════════════════════════════════════ */
+function updateRange(inp, valId, unit, type){
+    const v = inp.value, mn = inp.min, mx = inp.max;
+    const pct = ((v-mn)/(mx-mn))*100;
+    document.getElementById(valId).textContent = v+unit;
+    const colors = {
+        blue:   `linear-gradient(to right,#2563eb 0%,#06b6d4 ${pct}%,rgba(30,41,59,0.8) ${pct}%)`,
+        green:  `linear-gradient(to right,#059669 0%,#10b981 ${pct}%,rgba(30,41,59,0.8) ${pct}%)`,
+        purple: `linear-gradient(to right,#7c3aed 0%,#8b5cf6 ${pct}%,rgba(30,41,59,0.8) ${pct}%)`
+    };
+    inp.style.background = colors[type]||'';
+}
+document.querySelectorAll('.range-inp').forEach(inp=>{
+    const type = inp.classList.contains('ri-blue')?'blue':inp.classList.contains('ri-green')?'green':'purple';
+    const v=inp.value, mn=inp.min, mx=inp.max, pct=((v-mn)/(mx-mn))*100;
+    const colors = {
+        blue:   `linear-gradient(to right,#2563eb 0%,#06b6d4 ${pct}%,rgba(30,41,59,0.8) ${pct}%)`,
+        green:  `linear-gradient(to right,#059669 0%,#10b981 ${pct}%,rgba(30,41,59,0.8) ${pct}%)`,
+        purple: `linear-gradient(to right,#7c3aed 0%,#8b5cf6 ${pct}%,rgba(30,41,59,0.8) ${pct}%)`
+    };
+    inp.style.background = colors[type]||'';
+});
+
+/* ════════════════════════════════════════════════
+   MODULE RUNNER
+════════════════════════════════════════════════ */
+let modRunning = false, modTids = [];
+function clearMT(){ modTids.forEach(t=>clearTimeout(t)); modTids=[]; }
+function mt(fn,ms){ const id=setTimeout(fn,ms); modTids.push(id); }
+
+const ALL_GUNS = [
+    {name:'MP40',         cls:'gc-blue',  dmg:48,  rng:'45m',  spd:'★★★★★', rpm:857,  type:'SMG',     emoji:'🔫'},
+    {name:'UMP45',        cls:'gc-grn',   dmg:44,  rng:'40m',  spd:'★★★★★', rpm:750,  type:'SMG',     emoji:'🔫'},
+    {name:'P90',          cls:'gc-cyan',  dmg:40,  rng:'38m',  spd:'★★★★★', rpm:900,  type:'SMG',     emoji:'🔫'},
+    {name:'Thompson',     cls:'gc-ylw',   dmg:46,  rng:'42m',  spd:'★★★★☆', rpm:800,  type:'SMG',     emoji:'🔫'},
+    {name:'M4A1',         cls:'gc-cyan',  dmg:56,  rng:'65m',  spd:'★★★★☆', rpm:750,  type:'AR',      emoji:'🔫'},
+    {name:'AKM',          cls:'gc-org',   dmg:62,  rng:'70m',  spd:'★★★☆☆', rpm:600,  type:'AR',      emoji:'🔫'},
+    {name:'SCAR-L',       cls:'gc-blue',  dmg:53,  rng:'62m',  spd:'★★★★☆', rpm:700,  type:'AR',      emoji:'🔫'},
+    {name:'Groza',        cls:'gc-prp',   dmg:58,  rng:'55m',  spd:'★★★★☆', rpm:715,  type:'AR',      emoji:'🔫'},
+    {name:'FAMAS',        cls:'gc-pnk',   dmg:55,  rng:'60m',  spd:'★★★★☆', rpm:780,  type:'AR',      emoji:'🔫'},
+    {name:'AWM',          cls:'gc-red',   dmg:105, rng:'∞',    spd:'★☆☆☆☆', rpm:50,   type:'Sniper',  emoji:'🎯'},
+    {name:'M24',          cls:'gc-org',   dmg:88,  rng:'∞',    spd:'★★☆☆☆', rpm:75,   type:'Sniper',  emoji:'🎯'},
+    {name:'Kar98k',       cls:'gc-ylw',   dmg:94,  rng:'∞',    spd:'★★☆☆☆', rpm:55,   type:'Sniper',  emoji:'🎯'},
+    {name:'Mosin',        cls:'gc-grn',   dmg:90,  rng:'∞',    spd:'★★☆☆☆', rpm:60,   type:'Sniper',  emoji:'🎯'},
+    {name:'Desert Eagle', cls:'gc-ylw',   dmg:71,  rng:'35m',  spd:'★★★☆☆', rpm:300,  type:'Pistol',  emoji:'💥'},
+    {name:'M1014',        cls:'gc-red',   dmg:80,  rng:'18m',  spd:'★★★☆☆', rpm:200,  type:'Shotgun', emoji:'💣'},
+    {name:'M249',         cls:'gc-grn',   dmg:45,  rng:'60m',  spd:'★★★☆☆', rpm:850,  type:'LMG',     emoji:'🔫'},
+    {name:'Minigun',      cls:'gc-prp',   dmg:42,  rng:'55m',  spd:'★★★☆☆', rpm:1200, type:'LMG',     emoji:'🔫'},
+];
+
+function addLine(html,delay){
+    mt(()=>{
+        const o=document.getElementById('terminal-output');
+        const d=document.createElement('div'); d.className='term-line'; d.innerHTML=html;
+        o.appendChild(d); o.scrollTop=o.scrollHeight;
+    },delay);
+}
+
+function addProg(id,label,delay,fillDelay){
+    mt(()=>{
+        const o=document.getElementById('terminal-output');
+        const w=document.createElement('div'); w.className='term-prog-wrap';
+        w.innerHTML=`<div class="term-line"><span class="tc-pfx">▶</span> <span class="tc-cyan">${label}</span></div><div class="term-prog-bar"><div class="term-prog-fill" id="${id}"></div></div>`;
+        o.appendChild(w); o.scrollTop=o.scrollHeight;
+    },delay);
+    mt(()=>{ const b=document.getElementById(id); if(b) b.style.width='100%'; },fillDelay);
+}
+
+function addGuns(guns,delay){
+    mt(()=>{
+        const o=document.getElementById('terminal-output');
+        const r=document.createElement('div'); r.className='gun-row';
+        guns.forEach(g=>{ r.innerHTML+=`<span class="gun-chip ${g.cls}">${g.emoji} ${g.name}</span>`; });
+        o.appendChild(r); o.scrollTop=o.scrollHeight;
+    },delay);
+}
+
+function runModule(){
+    if(modRunning){ stopModule(); return; }
+    modRunning=true;
+    const btn=document.getElementById('btn-run');
+    const ic=document.getElementById('run-icon');
+    const lb=document.getElementById('run-label');
+    const tBox=document.getElementById('terminal-box');
+    const tOut=document.getElementById('terminal-output');
+    btn.classList.add('running'); ic.className='fa-solid fa-stop'; lb.textContent='Dừng Module';
+    tBox.classList.add('open'); tOut.innerHTML='';
+
+    let d=0; const I=210;
+
+    addLine(`<span class="tc-pfx">$</span><span class="tc-blue"> AimlockSuperV3.exe</span> <span class="tc-dim">--inject --vip --build=2026</span>`,d); d+=I;
+    addLine(`<span class="tc-dim">════════════════════════════════════════════</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[BOOT]</span> <span class="tc-cyan"> Khởi động AIMLOCK SUPER ENGINE v3.0...</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[SYS]</span>  <span class="tc-wht"> Platform  : Android 14 · ARM64 · Snapdragon 8 Gen 2</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[SYS]</span>  <span class="tc-wht"> RAM       : 12 GB · Available: 4.8 GB</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[SYS]</span>  <span class="tc-wht"> GPU       : Adreno 740 · Driver: 512.0</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[SYS]</span>  <span class="tc-wht"> Temp      : 38°C · Battery: 92%</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[VIP]</span>  <span class="tc-prp"> Key Status: ✓ VALID · Anti-Ban · Firebase Verified</span>`,d); d+=I;
+    addProg('p-init','Khởi tạo kernel module VIP...',d,d+180); d+=I*2.2;
+    addLine(`<span class="tc-pfx">[OK]</span>   <span class="tc-grn"> ✓ Module VIP loaded — OK</span>`,d); d+=I;
+
+    addLine(`<span class="tc-dim">────────────────────────────────────────────</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[DB]</span>   <span class="tc-ylw"> Phát hiện ${ALL_GUNS.length} vũ khí trong database:</span>`,d); d+=I;
+
+    addLine(`<span class="tc-pfx">  ┌─</span> <span class="tc-blue">SUB-MACHINE GUNS (SMG)</span>`,d); d+=I;
+    addGuns(ALL_GUNS.filter(g=>g.type==='SMG'),d); d+=I;
+
+    addLine(`<span class="tc-pfx">  ├─</span> <span class="tc-cyan">ASSAULT RIFLES (AR)</span>`,d); d+=I;
+    addGuns(ALL_GUNS.filter(g=>g.type==='AR'),d); d+=I;
+
+    addLine(`<span class="tc-pfx">  ├─</span> <span class="tc-red">SNIPER RIFLES</span>`,d); d+=I;
+    addGuns(ALL_GUNS.filter(g=>g.type==='Sniper'),d); d+=I;
+
+    addLine(`<span class="tc-pfx">  └─</span> <span class="tc-org">PISTOL · SHOTGUN · LMG</span>`,d); d+=I;
+    addGuns(ALL_GUNS.filter(g=>['Pistol','Shotgun','LMG'].includes(g.type)),d); d+=I;
+
+    addProg('p-scan','Phân tích &amp; quét cấu hình từng vũ khí...',d,d+220); d+=I*2.3;
+
+    addLine(`<span class="tc-dim">──── THỐNG KÊ TỪNG VŨ KHÍ ──────────────────</span>`,d); d+=I;
+    ALL_GUNS.forEach((g,i)=>{
+        addLine(`<span class="tc-pfx">  ${i===ALL_GUNS.length-1?'└─':'├─'}</span> <span class="gun-chip ${g.cls}">${g.emoji} ${g.name}</span>  <span class="tc-dim">DMG:</span><span class="tc-org"> ${g.dmg}</span>  <span class="tc-dim">RPM:</span><span class="tc-ylw"> ${g.rpm}</span>  <span class="tc-dim">RNG:</span><span class="tc-cyan"> ${g.rng}</span>  <span class="tc-dim">SPD:</span><span class="tc-grn"> ${g.spd}</span>  <span class="tc-dim">[${g.type}]</span>`, d+i*(I*.62));
+    });
+    d += ALL_GUNS.length*(I*.62)+I;
+
+    addProg('p-patch','Patching aimlock buffer v3.0 VIP...',d,d+250); d+=I*2.4;
+
+    addLine(`<span class="tc-dim">──── INJECTION PROCESS ──────────────────────</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[INJ]</span>  <span class="tc-ylw"> Injecting AimlockSuper VIP patch...</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[INJ]</span>  <span class="tc-wht"> Target  : com.dts.freefireth</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[INJ]</span>  <span class="tc-wht"> PID     : 9247 · TID: 4812</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[INJ]</span>  <span class="tc-wht"> Method  : ptrace hook · GOT patch</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[INJ]</span>  <span class="tc-grn"> Thread hijack: ✓ SUCCESS</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[INJ]</span>  <span class="tc-grn"> Hook inject : ✓ ACTIVE</span>`,d); d+=I;
+
+    addProg('p-bypass','Bypass EAC · GameGuard · Anti-Cheat...',d,d+280); d+=I*2.5;
+
+    addLine(`<span class="tc-dim">──── SECURITY MODULES ───────────────────────</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[SEC]</span>  <span class="tc-grn"> ✓ Anti-detect shield      : ACTIVE</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[SEC]</span>  <span class="tc-grn"> ✓ Signature spoof          : PASSED</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[SEC]</span>  <span class="tc-grn"> ✓ Memory encryption AES-256: ON</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[SEC]</span>  <span class="tc-grn"> ✓ Network tunnel (VPN spoof): ACTIVE</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[SEC]</span>  <span class="tc-grn"> ✓ UID randomizer            : ACTIVE</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[SEC]</span>  <span class="tc-prp"> ✓ Stealth mode (Ghost)      : ENABLED</span>`,d); d+=I;
+
+    addProg('p-apply','Áp dụng config VIP cho toàn bộ vũ khí...',d,d+320); d+=I*2.8;
+
+    addLine(`<span class="tc-dim">──── KẾT QUẢ INJECT VIP ────────────────────</span>`,d); d+=I;
+    ALL_GUNS.forEach((g,i)=>{
+        addLine(`<span class="tc-pfx">  ✓</span> <span class="gun-chip ${g.cls}">${g.emoji} ${g.name}</span> <span class="tc-grn"> ✓ PATCHED</span> <span class="tc-prp"> ✓ OPTIMIZED</span> <span class="tc-ylw"> ✓ VIP</span>`, d+i*(I*.5));
+    });
+    d += ALL_GUNS.length*(I*.5)+I;
+
+    addLine(`<span class="tc-dim">════════════════════════════════════════════</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[DONE]</span> <span class="tc-grn"> ✓ AIMLOCK SUPER V3 — HOẠT ĐỘNG!</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[INFO]</span> <span class="tc-prp"> Tỉ lệ Headshot dự kiến  : 88%+</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[INFO]</span> <span class="tc-cyan"> Số vũ khí được patch      : ${ALL_GUNS.length}</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">[INFO]</span> <span class="tc-ylw"> Chế độ                   : VIP FIREBASE VERIFIED</span>`,d); d+=I;
+    addLine(`<span class="tc-pfx">$</span><span class="tc-dim"> _</span><span class="blink-cur"></span>`,d); d+=I;
+
+    mt(()=>{
+        modRunning=false;
+        btn.classList.remove('running');
+        ic.className='fa-solid fa-rotate-right'; lb.textContent='Chạy Lại';
+        showRipple();
+        showToast('Module V3 hoàn thành! '+ALL_GUNS.length+' vũ khí patched','fa-terminal','#67e8f9');
+    },d);
+}
+
+function stopModule(){
+    clearMT(); modRunning=false;
+    const btn=document.getElementById('btn-run');
+    if(!btn) return;
+    btn.classList.remove('running');
+    document.getElementById('run-icon').className='fa-solid fa-play';
+    document.getElementById('run-label').textContent='Chạy Module';
+    const o=document.getElementById('terminal-output');
+    if(!o) return;
+    const el=document.createElement('div'); el.className='term-line';
+    el.innerHTML=`<span class="tc-pfx">[STOP]</span> <span class="tc-red"> ⚠ Module bị dừng bởi người dùng.</span>`;
+    o.appendChild(el); o.scrollTop=o.scrollHeight;
+    showToast('Module đã dừng','fa-circle-stop','#ef4444');
+}
+
+/* ════════════════════════════════════════════════
+   KHỞI ĐỘNG APP
+════════════════════════════════════════════════ */
+window.addEventListener('load', async () => {
+    await new Promise(res => setTimeout(res, firebaseReady ? 900 : 1400));
+    await checkAutoLogin();
+});
+</script>
+</body>
+</html>
