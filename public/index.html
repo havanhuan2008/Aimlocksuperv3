@@ -182,6 +182,15 @@ const features = [
   ['Bot Commands','Quản lý nhanh bằng Telegram bot','fa-robot'],
   ['Render Ready','Chạy tốt trên Render hoặc Node VPS','fa-server']
 ];
+
+function goFreeKey() {
+  showRipple();
+  showToast('Đang chuyển sang trang lấy key free...', 'fa-gift', '#10b981');
+  setTimeout(() => {
+    window.location.href = '/free-key.html';
+  }, 280);
+}
+
 function toast(msg, color='#60a5fa'){ const t=document.createElement('div'); t.style.cssText='position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:90;background:rgba(15,23,42,.95);border:1px solid rgba(96,165,250,.22);color:#e2e8f0;padding:11px 16px;border-radius:14px;font:800 12px Nunito,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.4)'; t.innerHTML=`<span style="color:${color};margin-right:8px">●</span>${msg}`; document.body.appendChild(t); setTimeout(()=>t.remove(),2600); }
 function api(url, options={}){ return fetch(url,{ headers:{'Content-Type':'application/json', ...(options.headers||{})}, ...options }).then(async r=>{ const d=await r.json().catch(()=>({ok:false,message:'API response invalid'})); if(!r.ok||d.ok===false) throw new Error(d.message||'API lỗi'); return d; }); }
 (function(){ const c=document.getElementById('bg'),x=c.getContext('2d'); let W,H,P=[]; function rs(){W=c.width=innerWidth;H=c.height=innerHeight} rs(); addEventListener('resize',rs); function mk(){ return {x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.8+.3,dx:(Math.random()-.5)*.35,dy:(Math.random()-.5)*.35,a:Math.random()*.5+.08}; } for(let i=0;i<80;i++)P.push(mk()); (function d(){x.clearRect(0,0,W,H); P.forEach(p=>{ x.beginPath(); x.arc(p.x,p.y,p.r,0,Math.PI*2); x.fillStyle=`rgba(96,165,250,${p.a})`; x.fill(); p.x+=p.dx; p.y+=p.dy; if(p.x<0||p.x>W||p.y<0||p.y>H) Object.assign(p,mk()); }); requestAnimationFrame(d); })(); })();
@@ -215,13 +224,7 @@ async function autoLogin(){ const key=localStorage.getItem(LS_KEY); if(!key) ret
 (function(){ setInterval(()=>{ const p=document.getElementById('ping'); if(p) p.textContent=Math.floor(Math.random()*16+7)+'ms'; },3500); renderFeatures(); setupLogin(); setupQuick(); document.getElementById('notifBtn').onclick=()=>document.getElementById('notifBg').classList.add('show'); document.getElementById('closeNotif').onclick=()=>document.getElementById('notifBg').classList.remove('show'); document.getElementById('logoutTop').onclick=logout; document.getElementById('logoutBtn').onclick=logout; document.getElementById('runBtn').onclick=runModule; loadStatus(); loadNotifications(); autoLogin(); })();
 
 
-function goFreeKey() {
-  showRipple();
-  showToast('Đang chuyển sang trang lấy key free...', 'fa-gift', '#10b981');
-  setTimeout(() => {
-    window.location.href = '/free-key.html';
-  }, 280);
-}
+
 </script>
 </body>
 </html>
