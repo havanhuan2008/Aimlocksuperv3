@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>VIP PRO LICENSE V4</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
@@ -28,6 +27,63 @@
 .modalbg,.notifbg{position:fixed;inset:0;background:rgba(2,8,23,.8);backdrop-filter:blur(10px);display:none;justify-content:center;align-items:flex-end;z-index:40}.modalbg.show,.notifbg.show{display:flex}.modal,.notif{width:100%;max-width:520px;background:linear-gradient(160deg,rgba(15,23,42,.98),rgba(30,41,59,.96));border:1px solid rgba(96,165,250,.22);border-radius:26px 26px 0 0;padding:22px 20px 38px}.drag{width:42px;height:4px;border-radius:5px;background:rgba(96,165,250,.28);margin:0 auto 18px}.modicon{width:72px;height:72px;margin:0 auto 16px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(37,99,235,.2),rgba(6,182,212,.12));border:1px solid rgba(96,165,250,.35);color:#60a5fa;font-size:28px;box-shadow:0 0 30px rgba(37,99,235,.25)}.mtitle{text-align:center;font:800 18px Nunito,sans-serif;margin-bottom:6px}.msub{text-align:center;color:#64748b;font:700 12px Nunito,sans-serif;margin-bottom:16px}.steps{display:grid;gap:10px;margin-bottom:16px}.step{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;background:rgba(30,41,59,.5);border:1px solid rgba(96,165,250,.08);opacity:.35}.step.active,.step.done{opacity:1}.sico{width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(30,41,59,.9);border:1px solid rgba(96,165,250,.2);color:#475569}.step.active .sico{color:#60a5fa;border-color:rgba(96,165,250,.45)}.step.done .sico{color:#6ee7b7;border-color:rgba(16,185,129,.35)}.stext .h{font:800 12px Nunito,sans-serif}.stext .d{font:700 11px Nunito,sans-serif;color:#64748b;margin-top:2px}.pwrap{margin-bottom:16px}.prow{display:flex;justify-content:space-between;margin-bottom:8px;color:#64748b;font:700 11px Nunito,sans-serif}.pbar{height:6px;border-radius:6px;background:rgba(30,41,59,.85);border:1px solid rgba(96,165,250,.1);overflow:hidden}.pfill{height:100%;width:0;background:linear-gradient(90deg,#2563eb,#06b6d4);transition:width .35s}
 .notifhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.notifhead .h{font:800 16px Nunito,sans-serif}.close{width:32px;height:32px;border-radius:9px;background:rgba(30,41,59,.7);border:1px solid rgba(96,165,250,.15);display:flex;align-items:center;justify-content:center;color:#64748b;cursor:pointer}.nlist{max-height:60vh;overflow:auto}.item{display:flex;gap:12px;padding:14px;border-radius:16px;background:rgba(30,41,59,.35);border:1px solid rgba(96,165,250,.1);margin-bottom:10px}.itype{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center}.info{background:rgba(37,99,235,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.3)}.warn{background:rgba(245,158,11,.12);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}.success{background:rgba(16,185,129,.12);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}.dangerx{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}.ibody{flex:1}.ibody .t{font:800 13px Nunito,sans-serif}.ibody .m{font:700 12px Nunito,sans-serif;color:#64748b;line-height:1.55;margin-top:4px}.ibody .tm{font:700 10px 'JetBrains Mono',monospace;color:#334155;margin-top:6px}
 @media(max-width:560px){.stats{grid-template-columns:repeat(3,1fr)}.quick{grid-template-columns:repeat(4,1fr)}}
+
+
+
+
+.btn-freekey {
+    width: 100%;
+    margin-top: 12px;
+    padding: 14px;
+    background: linear-gradient(135deg, rgba(16,185,129,0.18), rgba(6,182,212,0.14));
+    border: 1.5px solid rgba(16,185,129,0.35);
+    border-radius: 14px;
+    color: #e2e8f0;
+    font-size: 13.5px;
+    font-weight: 800;
+    font-family: 'Nunito', sans-serif;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s;
+    letter-spacing: 0.4px;
+    box-shadow: 0 8px 28px rgba(16,185,129,0.12);
+}
+
+.btn-freekey::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -80%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.10), transparent);
+    animation: btnFreeShine 2.8s ease-in-out infinite;
+}
+
+@keyframes btnFreeShine {
+    0% { left: -80%; }
+    100% { left: 200%; }
+}
+
+.btn-freekey:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 34px rgba(16,185,129,0.18);
+    border-color: rgba(16,185,129,0.55);
+}
+
+.btn-freekey:active {
+    transform: translateY(0);
+}
+
+.btn-freekey i {
+    font-size: 15px;
+    color: #6ee7b7;
+}
 </style>
 </head>
 <body>
@@ -36,7 +92,7 @@
   <div class="screen active center" id="loginScreen">
     <div class="card">
       <div class="logo"><div class="ring"></div><div class="ring2"></div><img src="https://sf-static.upanhlaylink.com/img/image_20260313c8e5ff3531d34404575f229fe201d9ac.jpg" alt="logo"></div>
-      <div class="title">VIP PRO LICENSE V4</div>
+      <div class="title">AIMLOCK SUPER V4</div>
       <div class="sub">Nhập key để đăng nhập vào portal. Key free được cấp ở trang riêng sau khi hoàn tất short-link.</div>
       <div class="statusrow"><div class="dot" id="apiDot"></div><div id="apiText" style="font:700 11.5px Nunito,sans-serif;color:#475569">Đang kết nối API...</div></div>
       <div class="label"><i class="fa-solid fa-key"></i> Key đăng nhập</div>
@@ -44,6 +100,11 @@
       <div class="strength" id="strength"><div class="bars"><div class="bar" id="b1"></div><div class="bar" id="b2"></div><div class="bar" id="b3"></div></div><div id="strengthText" style="font:700 11px Nunito,sans-serif;color:#64748b">Nhập key...</div></div>
       <div class="err" id="err"><i class="fa-solid fa-triangle-exclamation"></i><span id="errText">Key không hợp lệ</span></div>
       <button class="btn primary" id="loginBtn"><i class="fa-solid fa-fingerprint"></i> <span id="loginText">Đăng Nhập</span></button>
+      <button class="btn-freekey" onclick="goFreeKey()">
+  <i class="fa-solid fa-gift"></i>
+  <span>Lấy Key Free</span>
+</button>
+      
     </div>
     <div class="features">
       <div class="feat"><div class="check"><i class="fa-solid fa-check"></i></div>Tạo short-link lấy key free theo thiết bị</div>
@@ -152,6 +213,15 @@ function runModule(){ const term=document.getElementById('term'), box=document.g
 ]; lines.forEach((l,i)=>setTimeout(()=>{ term.innerHTML += `<div class="line"><span class="tc-blue">${l.startsWith('[')?l.slice(0,6):'$'}</span> <span class="${l.includes('DONE')?'tc-green':l.includes('INFO')?'tc-cyan':'tc-muted'}">${l.startsWith('$')?l.slice(2):l.slice(7)}</span></div>`; term.scrollTop=term.scrollHeight; if(i===lines.length-1){ modRunning=false; icon.className='fa-solid fa-rotate-right'; label.textContent='Chạy lại'; toast('Module V4 hoàn thành', '#67e8f9'); } }, i*340)); }
 async function autoLogin(){ const key=localStorage.getItem(LS_KEY); if(!key) return; try{ const d=await api('/api/auth/status',{method:'POST',body:JSON.stringify({key,deviceId:DEVICE_ID})}); showDashboard(key,d.keyData); }catch{ localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_KEYDATA); } }
 (function(){ setInterval(()=>{ const p=document.getElementById('ping'); if(p) p.textContent=Math.floor(Math.random()*16+7)+'ms'; },3500); renderFeatures(); setupLogin(); setupQuick(); document.getElementById('notifBtn').onclick=()=>document.getElementById('notifBg').classList.add('show'); document.getElementById('closeNotif').onclick=()=>document.getElementById('notifBg').classList.remove('show'); document.getElementById('logoutTop').onclick=logout; document.getElementById('logoutBtn').onclick=logout; document.getElementById('runBtn').onclick=runModule; loadStatus(); loadNotifications(); autoLogin(); })();
+
+
+function goFreeKey() {
+  showRipple();
+  showToast('Đang chuyển sang trang lấy key free...', 'fa-gift', '#10b981');
+  setTimeout(() => {
+    window.location.href = '/free-key.html';
+  }, 280);
+}
 </script>
 </body>
 </html>
